@@ -45,7 +45,7 @@ export default function Hero() {
               Ver proyectos
             </a>
             <a
-              href="/cv.pdf"
+              href="./cv.pdf"
               target="_blank"
               rel="noreferrer"
               className="px-5 py-2 border border-brandBlue text-brandBlue rounded-lg font-medium hover:bg-brandLight transition"

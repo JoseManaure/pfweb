@@ -32,7 +32,7 @@ export default function Hero() {
           </h1>
 
           <p className="text-gray-700 text-base md:text-lg max-w-md">
-            Desarrollador <strong>Full Stack Senior</strong> — React · Node.js · MongoDB · arquitecturas escalables.
+            Desarrollador <strong>Full Stack </strong> — React · Node.js · MongoDB · arquitecturas escalables.
             Diseño soluciones que priorizan rendimiento, seguridad y mantención.
           </p>
 

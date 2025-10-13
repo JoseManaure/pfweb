@@ -150,7 +150,7 @@ const toggleChat = () => setIsOpen(!isOpen);
           >
             <div className="aspect-video bg-gray-100">
               <img
-                src="/images/inventario-preview.png"
+                src="/images/dashVentas.png"
                 alt="Proyecto Inventario"
                 className="object-cover w-full h-full"
               />

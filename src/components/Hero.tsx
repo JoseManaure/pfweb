@@ -1,10 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import { FaReact, FaNodeJs, FaExternalLinkAlt } from "react-icons/fa";
 import { SiMongodb, SiTailwindcss } from "react-icons/si";
 import Script from "next/script";
 
+// ✅ Tipos
+type Message = {
+  role: "user" | "assistant"; // solo estos roles permitidos
+  content: string;
+};
+
+// ✅ Tech stack proyecto
 const techProject = [
   { name: "React", icon: <FaReact className="text-sky-500" /> },
   { name: "Node.js", icon: <FaNodeJs className="text-green-600" /> },
@@ -12,19 +19,34 @@ const techProject = [
   { name: "TailwindCSS", icon: <SiTailwindcss className="text-sky-400" /> },
 ];
 
+// ✅ Declaración global para GA
+declare global {
+  interface Window {
+    dataLayer: any[];
+    gtag?: (...args: any[]) => void;
+  }
+}
+
 export default function Hero() {
-  // ✅ Chat AI
-  const [messages, setMessages] = useState([]);
+  // Chat AI
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  // Estado para abrir/minimizar chat
+const [isOpen, setIsOpen] = useState(true);
+
+// Toggle chat
+const toggleChat = () => setIsOpen(!isOpen);
 
   const sendMessage = async () => {
     if (!input) return;
 
-    const newMessages = [...messages, { role: "user", content: input }];
+    const newMessages: Message[] = [...messages, { role: "user", content: input }];
     setMessages(newMessages);
     setInput("");
 
     try {
+      console.log("Enviando al endpoint /api/chat:", newMessages);
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -32,30 +54,42 @@ export default function Hero() {
       });
 
       const data = await response.json();
-      setMessages([...newMessages, { role: "assistant", content: data.message.content }]);
+      console.log("Respuesta del endpoint:", data);
+
+      setMessages((prev) => [
+        ...newMessages,
+        { role: "assistant", content: data.message.content || "Respuesta vacía" },
+      ]);
     } catch (error) {
       console.error("Error al llamar al endpoint de chat:", error);
     }
   };
 
-  // ✅ Google Analytics
+  // Scroll automático al último mensaje
+  useEffect(() => {
+    const chatContainer = document.getElementById("chat-messages");
+    if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+  }, [messages]);
+
+  // Google Analytics
   useEffect(() => {
     window.dataLayer = window.dataLayer || [];
-    function gtag() {
-      window.dataLayer.push(arguments);
+    function gtag(...args: any[]) {
+      window.dataLayer.push(args);
     }
+    window.gtag = gtag;
+
     gtag("js", new Date());
     gtag("config", "TU-GA4-ID"); // Reemplaza con tu GA4 ID
   }, []);
 
-  const trackClick = (label) => {
+  const trackClick = (label: string) => {
     if (window.gtag) {
-      window.gtag("event", "click", {
-        category: "Interacción",
-        label,
-      });
+      window.gtag("event", "click", { category: "Interacción", label });
     }
   };
+
+  
 
   return (
     <section id="inicio" className="flex items-center justify-center min-h-[90vh] bg-gray-50 px-6 relative">
@@ -185,29 +219,81 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Chat interactivo */}
-      <div className="fixed bottom-5 right-5 w-80 bg-white border border-gray-200 rounded-xl shadow-lg p-4 z-50">
-        <div className="h-64 overflow-y-auto mb-3">
-          {messages.map((m, i) => (
-            <div key={i} className={`mb-2 ${m.role === "user" ? "text-right" : "text-left"}`}>
-              <span className={`inline-block px-3 py-2 rounded-lg ${m.role === "user" ? "bg-blue-100" : "bg-gray-100"}`}>
-                {m.content}
-              </span>
-            </div>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Pregúntame sobre mi portafolio"
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-2"
-          />
-          <button onClick={sendMessage} className="px-3 py-2 bg-brandBlue text-white rounded-lg">
-            Enviar
-          </button>
-        </div>
+   {/* 💬 Chat interactivo flotante con modo minimizado */}
+<div className="fixed bottom-5 right-5 z-50">
+  {isOpen ? (
+    <div className="w-80 bg-white border border-gray-200 rounded-2xl shadow-lg p-4 flex flex-col animate-fade-in">
+      {/* Header del chat */}
+      <div className="flex justify-between items-center mb-2">
+        <span className="font-semibold text-gray-700 flex items-center gap-2">
+          💬 Asistente
+        </span>
+        <button
+          onClick={toggleChat}
+          className="text-gray-500 hover:text-gray-700 text-sm"
+          title="Minimizar"
+        >
+          ✕
+        </button>
       </div>
+
+      {/* Mensajes */}
+      <div className="h-64 overflow-y-auto mb-3" id="chat-messages">
+        {messages.length === 0 && (
+          <p className="text-gray-400 text-sm text-center mt-6">
+            👋 Hola! Pregúntame sobre mi experiencia o proyectos.
+          </p>
+        )}
+        {messages.map((m, i) => (
+          <div
+            key={i}
+            className={`mb-2 ${m.role === "user" ? "text-right" : "text-left"}`}
+          >
+            <span
+              className={`inline-block px-3 py-2 rounded-xl max-w-[85%] ${
+                m.role === "user"
+                  ? "bg-blue-100 text-gray-800"
+                  : "bg-gray-100 text-gray-700"
+              }`}
+            >
+              {m.content}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Input */}
+      <div className="flex gap-2">
+        <input
+          value={input}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            setInput(e.target.value)
+          }
+          onKeyDown={(e) => {
+            if (e.key === "Enter") sendMessage();
+          }}
+          placeholder="Escribe tu mensaje..."
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue/40"
+        />
+        <button
+          onClick={sendMessage}
+          className="px-3 py-2 bg-brandBlue text-white rounded-lg hover:bg-blue-700 transition text-sm"
+        >
+          ➤
+        </button>
+      </div>
+    </div>
+  ) : (
+    <button
+      onClick={toggleChat}
+      className="bg-brandBlue text-white p-4 rounded-full shadow-lg hover:scale-105 transition-transform"
+      title="Abrir chat"
+    >
+      💬
+    </button>
+  )}
+</div>
+
     </section>
   );
 }

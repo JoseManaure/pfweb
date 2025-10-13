@@ -10,13 +10,7 @@ export default function Page() {
         <Hero />
       </section>
 
-      {/* Tech Stack / Servicios */}
-      <section
-        id="servicios"
-        className="py-12 bg-gradient-to-b from-gray-50 to-white border-t border-gray-100"
-      >
-        <TechStack />
-      </section>
+      
 
       {/* Proyectos Destacados */}
       <section
@@ -24,6 +18,14 @@ export default function Page() {
         className="py-12 bg-white border-t border-gray-100"
       >
         <Projects />
+      </section>
+
+      {/* Tech Stack / Servicios */}
+      <section
+        id="servicios"
+        className="py-12 bg-gradient-to-b from-gray-50 to-white border-t border-gray-100"
+      >
+        <TechStack />
       </section>
 
       {/* Contacto */}

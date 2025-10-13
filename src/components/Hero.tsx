@@ -118,7 +118,7 @@ const toggleChat = () => setIsOpen(!isOpen);
               <a
                 href="#proyecto-inventario"
                 onClick={() => trackClick("Proyecto destacado")}
-                className="px-5 py-2 bg-brandBlue text-white rounded-lg font-medium hover:bg-blue-700 transition"
+                className="px-5 py-2 bg-brandBlue text-black rounded-lg font-medium hover:bg-blue-700 transition"
               >
                 Ver proyecto destacado
               </a>
@@ -131,58 +131,11 @@ const toggleChat = () => setIsOpen(!isOpen);
               >
                 Descargar CV
               </a>
-              <a
-                href="https://pfweb-nu.vercel.app/"
-                onClick={() => trackClick("Ver Portafolio completo")}
-                target="_blank"
-                rel="noreferrer"
-                className="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition"
-              >
-                Ver Portafolio completo
-              </a>
+              
             </div>
           </div>
 
-          {/* Proyecto destacado */}
-          <div
-            id="proyecto-inventario"
-            className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition"
-          >
-            <div className="aspect-video bg-gray-100">
-              <img
-                src="/images/dashVentas.png"
-                alt="Proyecto Inventario"
-                className="object-cover w-full h-full"
-              />
-            </div>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                🏪 Sistema de Inventario — Rasiva SPA
-              </h3>
-              <p className="text-gray-700 text-sm leading-relaxed mb-3">
-                Aplicación web completa para control de stock, rutas de despacho y gestión de ventas.
-                Desarrollada con React, Node.js, MongoDB y TailwindCSS.
-              </p>
-
-              {/* Stack del proyecto */}
-              <div className="flex flex-wrap items-center gap-3 text-sm mb-4">
-                {techProject.map((t) => (
-                  <span key={t.name} className="flex items-center gap-1">
-                    {t.icon} {t.name}
-                  </span>
-                ))}
-              </div>
-
-              <a
-                href="https://pfweb-nu.vercel.app/"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center text-brandBlue hover:underline font-medium"
-              >
-                Ver proyecto <FaExternalLinkAlt className="ml-1 w-4 h-4" />
-              </a>
-            </div>
-          </div>
+          
         </div>
 
         {/* Columna derecha: preview CV */}

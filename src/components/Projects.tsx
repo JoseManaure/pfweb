@@ -37,7 +37,7 @@ export default function Projects() {
                     href={p.demo}
                     target="_blank"
                     rel="noreferrer"
-                    className="px-4 py-2 bg-brandBlue text-white rounded-lg inline-flex items-center gap-2 hover:bg-blue-700 transition"
+                    className="px-4 py-2 bg-brandBlue text-black rounded-lg inline-flex items-center gap-2 hover:bg-blue-700 transition"
                   >
                     <FaExternalLinkAlt /> Demo
                   </a>

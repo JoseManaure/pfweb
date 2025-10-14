@@ -1,16 +1,15 @@
 import Hero from "../components/Hero";
 import TechStack from "../components/TechStack";
 import Projects from "../components/Projects";
+import "./globals.css";
 
 export default function Page() {
   return (
     <main className="flex flex-col">
       {/* Hero / Inicio */}
-      <section id="inicio" className="pt-16 pb-10 bg-white">
+      <section id="inicio" className=" bg-white">
         <Hero />
       </section>
-
-      
 
       {/* Proyectos Destacados */}
       <section

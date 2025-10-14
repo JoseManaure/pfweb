@@ -3,9 +3,12 @@ import { FaExternalLinkAlt, FaGithub } from "react-icons/fa";
 
 export default function Projects() {
   return (
-    <section id="proyectos" className="py-24 bg-gray-50">
+    <section
+      id="proyectos"
+      className="py-24 bg-gray-50 dark:bg-gray-900 transition-colors duration-300"
+    >
       <div className="max-w-6xl mx-auto px-6">
-        <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center text-gray-800">
+        <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center text-gray-800 dark:text-gray-100">
           Proyectos Destacados
         </h2>
 
@@ -13,17 +16,19 @@ export default function Projects() {
           {projects.map((p) => (
             <article
               key={p.id}
-              className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow p-6 flex flex-col justify-between"
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all p-6 flex flex-col justify-between border border-gray-100 dark:border-gray-700"
             >
               <div>
-                <h3 className="text-2xl font-semibold text-gray-800">{p.title}</h3>
-                <p className="text-gray-600 mt-3">{p.summary}</p>
+                <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
+                  {p.title}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 mt-3">{p.summary}</p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   {p.tech.map((t) => (
                     <span
                       key={t}
-                      className="text-sm px-3 py-1 bg-gray-100 text-gray-700 rounded-full"
+                      className="text-sm px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-full"
                     >
                       {t}
                     </span>
@@ -37,7 +42,7 @@ export default function Projects() {
                     href={p.demo}
                     target="_blank"
                     rel="noreferrer"
-                    className="px-4 py-2 bg-brandBlue text-black rounded-lg inline-flex items-center gap-2 hover:bg-blue-700 transition"
+                    className="px-4 py-2 bg-brandBlue text-black dark:text-white rounded-lg inline-flex items-center gap-2 hover:bg-blue-700 transition"
                   >
                     <FaExternalLinkAlt /> Demo
                   </a>
@@ -47,7 +52,7 @@ export default function Projects() {
                     href={p.repo}
                     target="_blank"
                     rel="noreferrer"
-                    className="px-4 py-2 border border-gray-300 text-gray-800 rounded-lg inline-flex items-center gap-2 hover:bg-gray-100 transition"
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 rounded-lg inline-flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
                   >
                     <FaGithub /> Código
                   </a>

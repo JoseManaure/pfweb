@@ -1,20 +1,24 @@
-import './globals.css';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import type { ReactNode } from 'react';
+// src/app/layout.tsx
+import "./globals.css";
+import { ThemeProvider } from "next-themes";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import type { ReactNode } from "react";
 
 export const metadata = {
-  title: 'Jose Manaure — Portafolio',
-  description: 'Portafolio Full Stack Senior — React · Node.js · MongoDB'
+  title: "Jose Manaure — Portafolio",
+  description: "Portafolio Full Stack Senior — React · Node.js · MongoDB",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="es">
-      <body className="antialiased bg-gray-50">
-        <Navbar />
-        <main className="pt-20">{children}</main> {/* pt-20 = 5rem */}
-        <Footer />
+    <html lang="es" suppressHydrationWarning>
+      <body className="font-sans bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <Navbar />
+          <main className="pt-20">{children}</main>
+          <Footer />
+        </ThemeProvider>
       </body>
     </html>
   );

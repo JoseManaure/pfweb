@@ -6,7 +6,7 @@ export default function Footer() {
         <span className="font-medium text-gray-800 dark:text-gray-200">
           José Gregorio Manaure Carvajal
         </span>{" "}
-        — Full Stack Senior · React & Node.js
+        
         <div className="mt-3">
           <a
             className="mx-2 text-brandBlue dark:text-sky-400 hover:underline hover:text-blue-600 dark:hover:text-sky-300 transition-colors"

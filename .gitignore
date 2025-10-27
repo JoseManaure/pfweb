@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Modelos y backend local
+myGpt/
+backend/
+llama_api/
+# Archivos temporales o de build
+.next/
+out/
+dist/

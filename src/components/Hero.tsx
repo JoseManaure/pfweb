@@ -56,8 +56,8 @@ export default function Hero() {
     setMessages((prev) => [...prev, userMessage, assistantMessage]);
     setInput("");
 
-    try { 
-      const response = await fetch("http://localhost:4000/api/chat", {
+    try {
+      const response = await fetch("https://6da3ae57a7fe.ngrok-free.app/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: input }),
@@ -150,7 +150,7 @@ export default function Hero() {
           <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white leading-snug transition-colors">
             Full Stack Engineer enfocado en{" "}
             <span className="text-brandBlue dark:text-sky-400">
-              rendimiento, escalabilidad 
+              rendimiento, escalabilidad
             </span>
           </h1>
           <p className="text-lg text-gray-700 dark:text-gray-300">
@@ -207,11 +207,10 @@ export default function Hero() {
               {messages.map((m, i) => (
                 <div key={i} className={`mb-2 ${m.role === "user" ? "text-right" : "text-left"}`}>
                   <span
-                    className={`inline-block px-3 py-2 rounded-xl max-w-[85%] ${
-                      m.role === "user"
-                        ? "bg-blue-100 dark:bg-sky-800 text-gray-800 dark:text-gray-200"
-                        : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200"
-                    }`}
+                    className={`inline-block px-3 py-2 rounded-xl max-w-[85%] ${m.role === "user"
+                      ? "bg-blue-100 dark:bg-sky-800 text-gray-800 dark:text-gray-200"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+                      }`}
                   >
                     {m.content}
                   </span>

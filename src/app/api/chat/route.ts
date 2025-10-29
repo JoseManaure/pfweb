@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
 import { personalContext } from "@/data/context";
 
-const MISTRAL_API_URL = "https://6da3ae57a7fe.ngrok-free.app/api/chat-json";
+const MISTRAL_API_URL = "https://edb5b930c463.ngrok-free.app/api/chat-json";
 
 // 🧠 Diccionario local
 const dictionary = [

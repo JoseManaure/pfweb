@@ -39,6 +39,7 @@ const initialSuggestions = [
 ];
 
 export default function Hero() {
+  const [userId, setUserId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isOpen, setIsOpen] = useState(true);
@@ -57,7 +58,8 @@ export default function Hero() {
     setInput("");
 
     try {
-      const response = await fetch("https://6da3ae57a7fe.ngrok-free.app/api/chat", {
+      const userId = "visitante-123";
+      const response = await fetch("https://edb5b930c463.ngrok-free.app/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: input }),
@@ -98,6 +100,19 @@ export default function Hero() {
       });
     }
   };
+
+  useEffect(() => {
+    // Revisar si ya hay un userId guardado
+    let existingId = localStorage.getItem("userId");
+
+    if (!existingId) {
+      // Si no existe, crear uno nuevo
+      existingId = `user-${Math.random().toString(36).substring(2, 10)}`;
+      localStorage.setItem("userId", existingId);
+    }
+
+    setUserId(existingId);
+  }, []);
 
   // Iniciar mensaje de bienvenida
   useEffect(() => {

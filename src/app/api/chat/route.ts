@@ -1,19 +1,23 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextApiRequest, NextApiResponse } from "next";
 import clientPromise from "@/lib/mongodb";
 import { personalContext } from "@/data/context";
 
-const MISTRAL_API_URL = "https://edb5b930c463.ngrok-free.app/api/chat-json";
+const MISTRAL_API_URL =
+  process.env.MISTRAL_API_URL || "https://78f2625bc4cd.ngrok-free.app/api/chat";
+const N8N_WEBHOOK_URL =
+  process.env.N8N_WEBHOOK_URL || "https://78f2625bc4cd.ngrok-free.app/webhook/chat";
 
-// 🧠 Diccionario local
-const dictionary = [
-  { question: "hola", answer: "¡Hola! 👋 Soy tu asistente virtual. Pregúntame sobre mis proyectos, experiencia o tecnologías." },
+type ChatMessage = { role: "user" | "assistant"; content: string; timestamp: Date };
+type ChatDocument = { userId: string; messages: ChatMessage[] };
+
+const dictionary: { question: string; answer: string }[] = [
+  { question: "hola", answer: "¡Hola! 👋 Soy tu asistente virtual. Pregúntame sobre mis proyectos o experiencia." },
   { question: "experiencia", answer: "Tengo más de 15 años de experiencia como desarrollador full stack, trabajando con React, Node.js y MongoDB." },
-  { question: "react", answer: "React es mi principal herramienta para construir interfaces dinámicas y rápidas con excelente experiencia de usuario." },
-  { question: "node", answer: "Node.js me permite crear el backend de mis aplicaciones full stack, gestionando APIs y servidores eficientemente." },
+  { question: "react", answer: "React es mi principal herramienta para construir interfaces dinámicas y rápidas." },
+  { question: "node", answer: "Node.js me permite crear el backend de mis aplicaciones full stack." },
 ];
 
-// 💬 Sugerencias predefinidas
-const suggestions = [
+const suggestions: string[] = [
   "¿Cuánta experiencia tienes?",
   "Háblame de tus proyectos",
   "¿Qué haces con React?",
@@ -21,19 +25,20 @@ const suggestions = [
   "¿Puedo ver tu CV?",
 ];
 
-// 🧩 Tipos
-interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-}
+// Flujo de contacto
+const contactFields = ["nombre", "apellido", "email", "asunto"] as const;
+type ContactField = typeof contactFields[number];
+const contactQuestions: Record<ContactField, string> = {
+  nombre: "¡Hola! Para poder contactarte, ¿cuál es tu nombre?",
+  apellido: "Perfecto, ¿y tu apellido?",
+  email: "Gracias. ¿Cuál es tu correo electrónico?",
+  asunto: "Finalmente, ¿cuál es el asunto de tu mensaje?",
+};
+type ContactSession = { currentField: number; data: Record<ContactField, string> };
+const contactSessions = new Map<string, ContactSession>();
 
-interface ChatDocument {
-  userId: string;
-  messages: ChatMessage[];
-}
+// ------------------- UTILIDADES -------------------
 
-// 🔍 Funciones auxiliares
 function tokenize(str: string) {
   return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(/\W+/).filter(Boolean);
 }
@@ -59,101 +64,115 @@ function getSmartAnswer(userMessage: string) {
   return bestAnswer;
 }
 
-// 🔗 Consultar Mistral con timeout y manejo de errores
 async function askMistral(message: string): Promise<string> {
-  const controller = new AbortController();
-  const TIMEOUT_MS = 15000; // 15 segundos de espera máximo
-  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
   try {
-    const auth = "usuario:clave123"; // si usas Basic Auth
-    const encoded = Buffer.from(auth).toString("base64");
-
-    console.log("⏱ Enviando request a Mistral...");
-    const start = Date.now();
-
     const res = await fetch(MISTRAL_API_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Basic ${encoded}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt: `${personalContext}\nUsuario: ${message}` }),
-      signal: controller.signal,
     });
-
-    const duration = Date.now() - start;
-    console.log(`✅ Respuesta recibida en ${duration}ms`);
-
-    if (!res.ok) {
-      console.warn(`⚠️ Respuesta HTTP no OK: ${res.status}`);
-      return "No pude conectar con el modelo Mistral. Pero puedo responder sobre José y sus proyectos.";
-    }
-
-    const data = await res.json();
-    if (data?.reply) return data.reply.trim();
-    return "No encontré una respuesta exacta.";
-  } catch (error: any) {
-    if (error.name === "AbortError") {
-      console.error("❌ Timeout: la API de Mistral no respondió a tiempo");
-    } else if (error?.cause?.code === "UND_ERR_SOCKET") {
-      console.log("ℹ️ Error de socket ignorado");
-    } else {
-      console.error("❌ Error al consultar Mistral:", error);
-    }
-    return "No pude conectar con el modelo Mistral. Pero puedo responder sobre José y sus proyectos.";
-  } finally {
-    clearTimeout(timeout);
+    if (!res.ok) return "No pude conectar con el modelo Mistral.";
+    const text = await res.text();
+    return text.replace(/^data:\s*/gm, "").trim();
+  } catch (err) {
+    console.error("❌ Error Mistral:", err);
+    return "No pude conectar con el modelo Mistral.";
   }
 }
 
-
-// 📩 Endpoint principal
-export async function POST(req: NextRequest) {
+async function notifyN8n(message: string, title: string = "Nuevo mensaje") {
   try {
-    const { messages, userId } = (await req.json()) as { messages: ChatMessage[]; userId?: string };
+    const res = await fetch(N8N_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, message }),
+    });
+    if (!res.ok) console.warn("⚠️ Webhook n8n devolvió", res.status);
+    else console.log("✅ Webhook enviado correctamente a n8n:", message);
+  } catch (err) {
+    console.error("❌ Error enviando webhook a n8n:", err);
+  }
+}
+
+// ------------------- HANDLER -------------------
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    const { messages, userId } = req.body as { messages?: ChatMessage[]; userId?: string };
     const userMessage = messages?.length ? messages[messages.length - 1].content : "";
 
-    if (!userMessage) {
-      return NextResponse.json({
-        message: { role: "assistant", content: "Mensaje vacío" },
-        suggestions,
-      });
+    if (!userMessage) return res.status(400).json({ message: { role: "assistant", content: "Mensaje vacío" }, suggestions });
+
+    console.log("💬 Mensaje recibido:", userMessage);
+
+    // Detectar intención de contacto
+    const triggerKeywords = ["contratar", "servicio", "precio", "presupuesto", "trabajar contigo", "cotización"];
+    const normalize = (str: string) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "");
+    const shouldTriggerWebhook = triggerKeywords.some(kw => normalize(userMessage).includes(normalize(kw)));
+
+    let session = userId ? contactSessions.get(userId) : undefined;
+
+    // Iniciar flujo de contacto
+    if (shouldTriggerWebhook && !session && userId) {
+      session = { currentField: 0, data: {} as Record<ContactField, string> };
+      contactSessions.set(userId, session);
+      return res.json({ message: { role: "assistant", content: contactQuestions[contactFields[0]] }, suggestions });
     }
 
-    // 1️⃣ Respuesta local
+    // Guardar respuestas de contacto
+    if (session && userId) {
+      const field: ContactField = contactFields[session.currentField];
+      session.data[field] = userMessage;
+      session.currentField += 1;
+
+      if (session.currentField < contactFields.length) {
+        contactSessions.set(userId, session);
+        return res.json({ message: { role: "assistant", content: contactQuestions[contactFields[session.currentField]] }, suggestions });
+      } else {
+        // Todos los datos completos → enviar a n8n
+        const finalMessage = session.data;
+        await notifyN8n(`📩 Nuevo contacto:
+Nombre: ${finalMessage.nombre}
+Apellido: ${finalMessage.apellido}
+Email: ${finalMessage.email}
+Asunto: ${finalMessage.asunto}`, "Formulario completado");
+
+        contactSessions.delete(userId);
+        return res.json({ message: { role: "assistant", content: "¡Gracias! Tu mensaje ha sido enviado. Te contactaré pronto." }, suggestions });
+      }
+    }
+
+    // Respuesta inteligente
     let aiResponse = getSmartAnswer(userMessage);
+    if (aiResponse.includes("No tengo") || aiResponse.length < 30) aiResponse = await askMistral(userMessage);
 
-    // 2️⃣ Si es vaga o corta, llama a Mistral
-    if (aiResponse.includes("No tengo") || aiResponse.length < 30) {
-      aiResponse = await askMistral(userMessage);
-    }
-
-    // 3️⃣ Guardar chat en MongoDB
+    // Guardar en MongoDB
     if (userId) {
       const client = await clientPromise;
       const db = client.db("portfolio");
       const collection = db.collection<ChatDocument>("chats");
 
-      const userMsg: ChatMessage = { role: "user", content: userMessage, timestamp: new Date() };
-      const assistantMsg: ChatMessage = { role: "assistant", content: aiResponse, timestamp: new Date() };
-
       await collection.updateOne(
         { userId },
-        { $push: { messages: { $each: [userMsg, assistantMsg] } } },
+        {
+          $push: {
+            messages: {
+              $each: [
+                { role: "user", content: userMessage, timestamp: new Date() },
+                { role: "assistant", content: aiResponse, timestamp: new Date() }
+              ]
+            }
+          }
+        },
         { upsert: true }
       );
     }
 
-    return NextResponse.json({
-      message: { role: "assistant", content: aiResponse },
-      suggestions,
-    });
-  } catch (error: any) {
-    console.error("❌ Error en API chat:", error);
-    return NextResponse.json({
-      message: { role: "assistant", content: `Error procesando tu mensaje: ${error.message}` },
-      suggestions,
-    });
+    // Responder al frontend
+    return res.status(200).json({ message: { role: "assistant", content: aiResponse }, suggestions });
+
+  } catch (err: any) {
+    console.error("❌ Error general en API /chat:", err);
+    return res.status(500).json({ message: { role: "assistant", content: "Error procesando tu mensaje." }, suggestions });
   }
 }

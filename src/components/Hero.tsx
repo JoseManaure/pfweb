@@ -103,7 +103,6 @@ export default function Hero() {
           return updated;
         });
       }
-
     } catch (err) {
       console.error("❌ Error conectando al backend:", err);
       setMessages(prev => {

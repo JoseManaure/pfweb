@@ -38,6 +38,10 @@
     "myGpt/backend/utils/notifyN8n.js"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "myGpt",
+    "backend",
+    "**/build",
+    "**/llama.cpp"
   ]
 }

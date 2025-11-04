@@ -95,31 +95,34 @@ async function notifyN8n(message: string, title: string = "Nuevo mensaje") {
 }
 
 // ------------------- HANDLER -------------------
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export async function POST(req: Request) {
   try {
-    const { messages, userId } = req.body as { messages?: ChatMessage[]; userId?: string };
+    const body = await req.json();
+    const { messages, userId } = body as { messages?: ChatMessage[]; userId?: string };
     const userMessage = messages?.length ? messages[messages.length - 1].content : "";
 
-    if (!userMessage) return res.status(400).json({ message: { role: "assistant", content: "Mensaje vacío" }, suggestions });
+    if (!userMessage)
+      return Response.json({ message: { role: "assistant", content: "Mensaje vacío" }, suggestions }, { status: 400 });
 
     console.log("💬 Mensaje recibido:", userMessage);
 
-    // Detectar intención de contacto
     const triggerKeywords = ["contratar", "servicio", "precio", "presupuesto", "trabajar contigo", "cotización"];
-    const normalize = (str: string) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "");
+    const normalize = (str: string) =>
+      str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "");
     const shouldTriggerWebhook = triggerKeywords.some(kw => normalize(userMessage).includes(normalize(kw)));
 
     let session = userId ? contactSessions.get(userId) : undefined;
 
-    // Iniciar flujo de contacto
+    // Flujo de contacto
     if (shouldTriggerWebhook && !session && userId) {
       session = { currentField: 0, data: {} as Record<ContactField, string> };
       contactSessions.set(userId, session);
-      return res.json({ message: { role: "assistant", content: contactQuestions[contactFields[0]] }, suggestions });
+      return Response.json({
+        message: { role: "assistant", content: contactQuestions[contactFields[0]] },
+        suggestions,
+      });
     }
 
-    // Guardar respuestas de contacto
     if (session && userId) {
       const field: ContactField = contactFields[session.currentField];
       session.data[field] = userMessage;
@@ -127,9 +130,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (session.currentField < contactFields.length) {
         contactSessions.set(userId, session);
-        return res.json({ message: { role: "assistant", content: contactQuestions[contactFields[session.currentField]] }, suggestions });
+        return Response.json({
+          message: { role: "assistant", content: contactQuestions[contactFields[session.currentField]] },
+          suggestions,
+        });
       } else {
-        // Todos los datos completos → enviar a n8n
         const finalMessage = session.data;
         await notifyN8n(`📩 Nuevo contacto:
 Nombre: ${finalMessage.nombre}
@@ -138,15 +143,19 @@ Email: ${finalMessage.email}
 Asunto: ${finalMessage.asunto}`, "Formulario completado");
 
         contactSessions.delete(userId);
-        return res.json({ message: { role: "assistant", content: "¡Gracias! Tu mensaje ha sido enviado. Te contactaré pronto." }, suggestions });
+        return Response.json({
+          message: { role: "assistant", content: "¡Gracias! Tu mensaje ha sido enviado. Te contactaré pronto." },
+          suggestions,
+        });
       }
     }
 
-    // Respuesta inteligente
+    // Inteligencia
     let aiResponse = getSmartAnswer(userMessage);
-    if (aiResponse.includes("No tengo") || aiResponse.length < 30) aiResponse = await askMistral(userMessage);
+    if (aiResponse.includes("No tengo") || aiResponse.length < 30)
+      aiResponse = await askMistral(userMessage);
 
-    // Guardar en MongoDB
+    // Guardar chat
     if (userId) {
       const client = await clientPromise;
       const db = client.db("portfolio");
@@ -159,20 +168,18 @@ Asunto: ${finalMessage.asunto}`, "Formulario completado");
             messages: {
               $each: [
                 { role: "user", content: userMessage, timestamp: new Date() },
-                { role: "assistant", content: aiResponse, timestamp: new Date() }
-              ]
-            }
-          }
+                { role: "assistant", content: aiResponse, timestamp: new Date() },
+              ],
+            },
+          },
         },
         { upsert: true }
       );
     }
 
-    // Responder al frontend
-    return res.status(200).json({ message: { role: "assistant", content: aiResponse }, suggestions });
-
-  } catch (err: any) {
+    return Response.json({ message: { role: "assistant", content: aiResponse }, suggestions });
+  } catch (err) {
     console.error("❌ Error general en API /chat:", err);
-    return res.status(500).json({ message: { role: "assistant", content: "Error procesando tu mensaje." }, suggestions });
+    return Response.json({ message: { role: "assistant", content: "Error procesando tu mensaje." }, suggestions }, { status: 500 });
   }
 }

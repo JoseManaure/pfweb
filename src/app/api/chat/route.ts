@@ -3,7 +3,7 @@ import clientPromise from "@/lib/mongodb";
 import { personalContext } from "@/data/context";
 
 const MISTRAL_API_URL =
-  process.env.MISTRAL_API_URL || "https://rotten-teeth-stay.loca.lt/api/chat";
+  process.env.MISTRAL_API_URL || "https://soft-pandas-hammer.loca.lt/api/chat";
 const N8N_WEBHOOK_URL =
   process.env.N8N_WEBHOOK_URL || "https://f8e85894b3ed.ngrok-free.app/webhook/chat";
 

@@ -76,7 +76,7 @@ export default function Hero() {
     setInput("");
 
     try {
-      const response = await fetch("http://localhost:4000/api/chat", {
+      const response = await fetch("https://portfolio-server-production-67e9.up.railway.app/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt, sessionId }),

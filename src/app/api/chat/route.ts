@@ -3,9 +3,9 @@ import clientPromise from "@/lib/mongodb";
 import { personalContext } from "@/data/context";
 
 const MISTRAL_API_URL =
-  process.env.MISTRAL_API_URL || "https://bitter-pants-win.loca.lt/api/chat";
+  process.env.MISTRAL_API_URL || "https://rotten-teeth-stay.loca.lt/api/chat";
 const N8N_WEBHOOK_URL =
-  process.env.N8N_WEBHOOK_URL || "https://21064a753e80.ngrok-free.app/webhook/chat";
+  process.env.N8N_WEBHOOK_URL || "https://f8e85894b3ed.ngrok-free.app/webhook/chat";
 
 type ChatMessage = { role: "user" | "assistant"; content: string; timestamp: Date };
 type ChatDocument = { userId: string; messages: ChatMessage[] };

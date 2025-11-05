@@ -42,7 +42,7 @@ export default function Hero() {
   const [input, setInput] = useState("");
   const [isOpen, setIsOpen] = useState(true);
   const [suggestions, setSuggestions] = useState<string[]>(initialSuggestions);
-  const [sessionId] = useState(() => crypto.randomUUID()); // identificador único de sesión
+  const [sessionId] = useState(() => crypto.randomUUID());
   const toggleChat = () => setIsOpen(!isOpen);
 
   // 👋 Mensaje de bienvenida
@@ -65,7 +65,7 @@ export default function Hero() {
     if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
   }, [messages]);
 
-  // ✅ Función principal con streaming SSE
+  // ✅ Función principal con streaming SSE y envío asíncrono a n8n
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -76,10 +76,19 @@ export default function Hero() {
     setInput("");
 
     try {
+      // 🌐 Llamada al backend relay
       const response = await fetch("https://portfolio-server-production-67e9.up.railway.app/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, sessionId }),
+        body: JSON.stringify({
+          prompt,
+          sessionId,
+          // Datos opcionales para n8n
+          nombre: "Usuario",
+          apellido: "Desconocido",
+          email: "usuario@correo.com",
+          asunto: prompt,
+        }),
       });
 
       if (!response.body) throw new Error("No hay body en la respuesta");
@@ -103,6 +112,21 @@ export default function Hero() {
           return updated;
         });
       }
+
+      // ✅ Envío a n8n asíncrono, no bloqueante
+      (async () => {
+        try {
+          await fetch("https://tu-n8n-url/webhook", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nombre: "Usuario", apellido: "Desconocido", email: "usuario@correo.com", asunto: prompt }),
+          });
+          console.log("📡 Datos enviados a n8n");
+        } catch (err) {
+          console.warn("⚠️ Error enviando a n8n:", err);
+        }
+      })();
+
     } catch (err) {
       console.error("❌ Error conectando al backend:", err);
       setMessages(prev => {

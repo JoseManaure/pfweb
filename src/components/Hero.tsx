@@ -116,7 +116,7 @@ export default function Hero() {
       // ✅ Envío a n8n asíncrono, no bloqueante
       (async () => {
         try {
-          await fetch("https://tu-n8n-url/webhook", {
+          await fetch("https://f8e85894b3ed.ngrok-free.app/webhook", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ nombre: "Usuario", apellido: "Desconocido", email: "usuario@correo.com", asunto: prompt }),

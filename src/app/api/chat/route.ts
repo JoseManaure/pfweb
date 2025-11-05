@@ -18,11 +18,10 @@ const dictionary: { question: string; answer: string }[] = [
 ];
 
 const suggestions: string[] = [
-  "¿Cuánta experiencia tienes?",
+  "¿quiero contratar tus servicios?",
   "Háblame de tus proyectos",
   "¿Qué haces con React?",
   "¿Cuál es tu app más destacada?",
-  "¿Puedo ver tu CV?",
 ];
 
 // Flujo de contacto
@@ -137,10 +136,10 @@ export async function POST(req: Request) {
       } else {
         const finalMessage = session.data;
         await notifyN8n(`📩 Nuevo contacto:
-Nombre: ${finalMessage.nombre}
-Apellido: ${finalMessage.apellido}
-Email: ${finalMessage.email}
-Asunto: ${finalMessage.asunto}`, "Formulario completado");
+      Nombre: ${finalMessage.nombre}
+      Apellido: ${finalMessage.apellido}
+      Email: ${finalMessage.email}
+      Asunto: ${finalMessage.asunto}`, "Formulario completado");
 
         contactSessions.delete(userId);
         return Response.json({

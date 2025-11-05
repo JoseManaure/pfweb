@@ -42,8 +42,12 @@ export default function Hero() {
   const [input, setInput] = useState("");
   const [isOpen, setIsOpen] = useState(true);
   const [suggestions, setSuggestions] = useState<string[]>(initialSuggestions);
-  const [sessionId] = useState(() => crypto.randomUUID());
+  const [sessionId] = useState(() => crypto.randomUUID()); // identificador único de sesión
   const toggleChat = () => setIsOpen(!isOpen);
+
+  // URL configurable del backend
+  const BACKEND_URL =
+    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
 
   // 👋 Mensaje de bienvenida
   useEffect(() => {
@@ -65,54 +69,107 @@ export default function Hero() {
     if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
   }, [messages]);
 
-  // ✅ Función principal con streaming SSE y envío asíncrono a n8n
+  // ✅ Función principal: SSE si está disponible, fallback fetch normal
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    const userMessage: Message = { role: "user", content: input, time: getCurrentTime() };
-    const assistantMessage: Message = { role: "assistant", content: "", time: getCurrentTime() };
-    setMessages(prev => [...prev, userMessage, assistantMessage]);
-
+    const userMessage: Message = {
+      role: "user",
+      content: input,
+      time: getCurrentTime(),
+    };
+    const assistantMessage: Message = {
+      role: "assistant",
+      content: "",
+      time: getCurrentTime(),
+    };
+    setMessages((prev) => [...prev, userMessage, assistantMessage]);
     const prompt = input.trim();
     setInput("");
 
+    // 👇 Intentamos SSE primero
+    if (typeof EventSource !== "undefined") {
+      try {
+        const evtSource = new EventSource(
+          `${BACKEND_URL}/api/chat-sse?prompt=${encodeURIComponent(
+            prompt
+          )}&sessionId=${sessionId}`
+        );
+
+        let fullReply = "";
+
+        evtSource.onmessage = (event) => {
+          if (event.data === "[FIN]") {
+            evtSource.close();
+            return;
+          }
+          fullReply += event.data + " ";
+          setMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1] = {
+              role: "assistant",
+              content: fullReply.trim(),
+              time: getCurrentTime(),
+            };
+            return updated;
+          });
+        };
+
+        evtSource.onerror = (err) => {
+          console.error("❌ Error SSE:", err);
+          evtSource.close();
+          setMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1] = {
+              role: "assistant",
+              content:
+                "❌ Error SSE. Intentando fallback fetch normal...",
+              time: getCurrentTime(),
+            };
+            return updated;
+          });
+          // fallback fetch
+          fallbackFetch(prompt);
+        };
+        return;
+      } catch (err) {
+        console.warn("❌ SSE falló, usando fetch normal:", err);
+        fallbackFetch(prompt);
+      }
+    } else {
+      fallbackFetch(prompt);
+    }
+  };
+
+  const fallbackFetch = async (prompt: string) => {
     try {
-      const eventSource = new EventSource(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat?prompt=${encodeURIComponent(prompt)}&sessionId=${sessionId}`
-      );
+      const res = await fetch(`${BACKEND_URL}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, sessionId }),
+      });
 
-      let fullReply = "";
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
 
-      eventSource.onmessage = (event) => {
-        const chunk = event.data;
-        if (chunk === "[FIN]") {
-          eventSource.close();
-          return;
-        }
-
-        fullReply += chunk + " ";
-        setMessages(prev => {
-          const updated = [...prev];
-          updated[updated.length - 1] = { role: "assistant", content: fullReply.trim(), time: getCurrentTime() };
-          return updated;
-        });
-      };
-
-      eventSource.onerror = (err) => {
-        console.error("❌ Error SSE:", err);
-        eventSource.close();
-        setMessages(prev => {
-          const updated = [...prev];
-          updated[updated.length - 1] = { role: "assistant", content: "❌ Error conectando al servidor.", time: getCurrentTime() };
-          return updated;
-        });
-      };
-
-    } catch (err) {
-      console.error("❌ Error enviando mensaje:", err);
-      setMessages(prev => {
+      setMessages((prev) => {
         const updated = [...prev];
-        updated[updated.length - 1] = { role: "assistant", content: "❌ Error enviando mensaje.", time: getCurrentTime() };
+        updated[updated.length - 1] = {
+          role: "assistant",
+          content: data.reply || "Sin respuesta",
+          time: getCurrentTime(),
+        };
+        return updated;
+      });
+    } catch (err) {
+      console.error("❌ Error fetch fallback:", err);
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = {
+          role: "assistant",
+          content: "❌ Error conectando al backend.",
+          time: getCurrentTime(),
+        };
         return updated;
       });
     }
@@ -139,7 +196,8 @@ export default function Hero() {
           <p className="text-lg text-gray-700 dark:text-gray-300">
             Diseño y desarrollo sistemas robustos con{" "}
             <strong>React</strong>, <strong>Node.js</strong> y{" "}
-            <strong>MongoDB</strong>, aplicando principios de arquitectura limpia y optimización full cycle.
+            <strong>MongoDB</strong>, aplicando principios de arquitectura
+            limpia y optimización full cycle.
           </p>
         </div>
       </div>
@@ -149,7 +207,9 @@ export default function Hero() {
         {isOpen ? (
           <div className="w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-4 flex flex-col">
             <div className="flex justify-between items-center mb-2">
-              <span className="font-semibold text-gray-700 dark:text-gray-200">💬 Asistente</span>
+              <span className="font-semibold text-gray-700 dark:text-gray-200">
+                💬 Asistente
+              </span>
               <button
                 onClick={toggleChat}
                 className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-sm"
@@ -161,7 +221,11 @@ export default function Hero() {
 
             <div className="h-64 overflow-y-auto mb-2" id="chat-messages">
               {messages.map((m, i) => (
-                <div key={i} className={`mb-2 ${m.role === "user" ? "text-right" : "text-left"}`}>
+                <div
+                  key={i}
+                  className={`mb-2 ${m.role === "user" ? "text-right" : "text-left"
+                    }`}
+                >
                   <span
                     className={`inline-block px-3 py-2 rounded-xl max-w-[85%] break-words whitespace-pre-wrap ${m.role === "user"
                       ? "bg-blue-100 dark:bg-sky-800 text-gray-800 dark:text-gray-200"
@@ -170,7 +234,9 @@ export default function Hero() {
                   >
                     {m.content}
                   </span>
-                  <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{m.time}</div>
+                  <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                    {m.time}
+                  </div>
                 </div>
               ))}
             </div>
@@ -179,7 +245,9 @@ export default function Hero() {
               <div className="flex gap-2">
                 <input
                   value={input}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setInput(e.target.value)
+                  }
                   onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                   placeholder="Escribe tu mensaje..."
                   className="flex-1 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue/40"

@@ -79,7 +79,7 @@ export default function Hero() {
     try {
       // ⚡ SSE desde tu backend Relay
       const eventSource = new EventSource(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL || "https://portfolio-server-production-67e9.up.railway.app"}/api/chat?prompt=${encodeURIComponent(prompt)}&sessionId=${sessionId}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat-sse?prompt=${encodeURIComponent(prompt)}&sessionId=${sessionId}`
       );
 
       let fullReply = "";

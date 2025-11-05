@@ -72,38 +72,23 @@ export default function Hero() {
     const userMessage: Message = { role: "user", content: input, time: getCurrentTime() };
     const assistantMessage: Message = { role: "assistant", content: "", time: getCurrentTime() };
     setMessages(prev => [...prev, userMessage, assistantMessage]);
+
     const prompt = input.trim();
     setInput("");
 
     try {
-      // 🌐 Llamada al backend relay
-      const response = await fetch("https://portfolio-server-production-67e9.up.railway.app/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt,
-          sessionId,
-          // Datos opcionales para n8n
-          nombre: "Usuario",
-          apellido: "Desconocido",
-          email: "usuario@correo.com",
-          asunto: prompt,
-        }),
-      });
+      const eventSource = new EventSource(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat?prompt=${encodeURIComponent(prompt)}&sessionId=${sessionId}`
+      );
 
-      if (!response.body) throw new Error("No hay body en la respuesta");
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
       let fullReply = "";
 
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-
-        let chunk = decoder.decode(value);
-        chunk = chunk.replace(/^data:\s*/g, "").trim();
-        if (!chunk || chunk === "[FIN]") continue;
+      eventSource.onmessage = (event) => {
+        const chunk = event.data;
+        if (chunk === "[FIN]") {
+          eventSource.close();
+          return;
+        }
 
         fullReply += chunk + " ";
         setMessages(prev => {
@@ -111,27 +96,23 @@ export default function Hero() {
           updated[updated.length - 1] = { role: "assistant", content: fullReply.trim(), time: getCurrentTime() };
           return updated;
         });
-      }
+      };
 
-      // ✅ Envío a n8n asíncrono, no bloqueante
-      (async () => {
-        try {
-          await fetch("https://f8e85894b3ed.ngrok-free.app/webhook", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ nombre: "Usuario", apellido: "Desconocido", email: "usuario@correo.com", asunto: prompt }),
-          });
-          console.log("📡 Datos enviados a n8n");
-        } catch (err) {
-          console.warn("⚠️ Error enviando a n8n:", err);
-        }
-      })();
+      eventSource.onerror = (err) => {
+        console.error("❌ Error SSE:", err);
+        eventSource.close();
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: "assistant", content: "❌ Error conectando al servidor.", time: getCurrentTime() };
+          return updated;
+        });
+      };
 
     } catch (err) {
-      console.error("❌ Error conectando al backend:", err);
+      console.error("❌ Error enviando mensaje:", err);
       setMessages(prev => {
         const updated = [...prev];
-        updated[updated.length - 1] = { role: "assistant", content: "❌ Error conectando al servidor.", time: getCurrentTime() };
+        updated[updated.length - 1] = { role: "assistant", content: "❌ Error enviando mensaje.", time: getCurrentTime() };
         return updated;
       });
     }

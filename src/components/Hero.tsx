@@ -5,14 +5,12 @@ import { FaReact, FaNodeJs } from "react-icons/fa";
 import { SiMongodb, SiTailwindcss } from "react-icons/si";
 import Script from "next/script";
 
-// ✅ Tipos
 type Message = {
   role: "user" | "assistant";
   content: string;
-  time: string; // 🕒 hora
+  time: string;
 };
 
-// ✅ Tech stack
 const techProject = [
   { name: "React", icon: <FaReact className="text-sky-500" /> },
   { name: "Node.js", icon: <FaNodeJs className="text-green-600" /> },
@@ -20,7 +18,6 @@ const techProject = [
   { name: "TailwindCSS", icon: <SiTailwindcss className="text-sky-400" /> },
 ];
 
-// ✅ Sugerencias iniciales
 const initialSuggestions = [
   "Hola",
   "Cuéntame sobre tu experiencia",
@@ -31,7 +28,6 @@ const initialSuggestions = [
   "UI/UX",
 ];
 
-// 🕒 Función para obtener la hora actual
 function getCurrentTime(): string {
   const now = new Date();
   return now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -45,7 +41,12 @@ export default function Hero() {
   const [sessionId] = useState(() => crypto.randomUUID());
   const toggleChat = () => setIsOpen(!isOpen);
 
-  // 👋 Mensaje de bienvenida
+  // 🌍 Detecta entorno y construye URL base
+  const BASE_URL =
+    process.env.NODE_ENV === "production"
+      ? process.env.NEXT_PUBLIC_API_URL || "https://tu-backend-production-url.com"
+      : "https://seven-apples-draw.loca.lt"; // 👈 tu backend local (Railway o Express local)
+
   useEffect(() => {
     if (messages.length === 0) {
       setMessages([
@@ -59,13 +60,11 @@ export default function Hero() {
     }
   }, []);
 
-  // 🧭 Auto-scroll
   useEffect(() => {
     const chatContainer = document.getElementById("chat-messages");
     if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
   }, [messages]);
 
-  // ✅ Función principal con SSE
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -77,43 +76,64 @@ export default function Hero() {
     setInput("");
 
     try {
-      // ⚡ SSE desde tu backend Relay
-      const eventSource = new EventSource(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat-sse?prompt=${encodeURIComponent(prompt)}&sessionId=${sessionId}`
-      );
+      // 🌍 Detecta entorno y configura el backend automáticamente
+      const backendBase =
+        process.env.NODE_ENV === "production"
+          ? "https://pfweb-nu.vercel.app" // ✅ URL de tu app desplegada en Vercel
+          : "http://localhost:4001"; // ✅ backend local en desarrollo
+
+      // 📡 Conexión SSE
+      const sseUrl = `${backendBase}/api/chat-sse?prompt=${encodeURIComponent(
+        prompt
+      )}&sessionId=${sessionId}`;
+
+      console.log("📡 Conectando SSE a:", sseUrl);
+
+      const eventSource = new EventSource(sseUrl);
 
       let fullReply = "";
 
       eventSource.onmessage = (event) => {
         const data = event.data;
-        if (data === "[FIN]") {
+        if (data === "[FIN]" || data.includes('"done":true')) {
           eventSource.close();
           return;
         }
 
         fullReply += data + " ";
-        setMessages(prev => {
+        setMessages((prev) => {
           const updated = [...prev];
-          updated[updated.length - 1] = { role: "assistant", content: fullReply.trim(), time: getCurrentTime() };
+          updated[updated.length - 1] = {
+            role: "assistant",
+            content: fullReply.trim(),
+            time: getCurrentTime(),
+          };
           return updated;
         });
       };
 
       eventSource.onerror = (err) => {
         console.error("❌ Error SSE:", err);
-        setMessages(prev => {
+        setMessages((prev) => {
           const updated = [...prev];
-          updated[updated.length - 1] = { role: "assistant", content: "❌ Error conectando con el servidor.", time: getCurrentTime() };
+          updated[updated.length - 1] = {
+            role: "assistant",
+            content: "❌ Error conectando con el servidor.",
+            time: getCurrentTime(),
+          };
           return updated;
         });
         eventSource.close();
       };
-
     } catch (err) {
       console.error("❌ Error enviando mensaje:", err);
-      setMessages(prev => {
+      setMessages((prev) => {
         const updated = [...prev];
-        updated[updated.length - 1] = { role: "assistant", content: "❌ Error enviando mensaje.", time: getCurrentTime() };
+        updated[updated.length - 1] = {
+          role: "assistant",
+          content: "❌ Error enviando mensaje.",
+          time: getCurrentTime(),
+        };
         return updated;
       });
     }
@@ -158,10 +178,12 @@ export default function Hero() {
             <div className="h-64 overflow-y-auto mb-2" id="chat-messages">
               {messages.map((m, i) => (
                 <div key={i} className={`mb-2 ${m.role === "user" ? "text-right" : "text-left"}`}>
-                  <span className={`inline-block px-3 py-2 rounded-xl max-w-[85%] break-words whitespace-pre-wrap ${m.role === "user"
-                    ? "bg-blue-100 dark:bg-sky-800 text-gray-800 dark:text-gray-200"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200"
-                    }`}>
+                  <span
+                    className={`inline-block px-3 py-2 rounded-xl max-w-[85%] break-words whitespace-pre-wrap ${m.role === "user"
+                      ? "bg-blue-100 dark:bg-sky-800 text-gray-800 dark:text-gray-200"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+                      }`}
+                  >
                     {m.content}
                   </span>
                   <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{m.time}</div>

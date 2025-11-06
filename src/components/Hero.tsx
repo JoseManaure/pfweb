@@ -79,7 +79,7 @@ export default function Hero() {
       // 🌍 Detecta entorno y configura el backend automáticamente
       const backendBase =
         process.env.NODE_ENV === "production"
-          ? "https://pfweb-nu.vercel.app" // ✅ URL de tu app desplegada en Vercel
+          ? "https://portfolio-server-production-67e9.up.railway.app" // ✅ URL de tu app desplegada en Vercel
           : "http://localhost:4001"; // ✅ backend local en desarrollo
 
       // 📡 Conexión SSE

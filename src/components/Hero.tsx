@@ -45,7 +45,7 @@ export default function Hero() {
   const BASE_URL =
     process.env.NODE_ENV === "production"
       ? process.env.NEXT_PUBLIC_API_URL || "https://tu-backend-production-url.com"
-      : "https://seven-apples-draw.loca.lt"; // 👈 tu backend local (Railway o Express local)
+      : "https://beige-days-greet.loca.lt"; // 👈 tu backend local (Railway o Express local)
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -120,13 +120,24 @@ export default function Hero() {
       let fullReply = "";
 
       eventSource.onmessage = (event) => {
-        const data = event.data;
-        if (data === "[FIN]" || data.includes('"done":true')) {
+        let chunk = event.data;
+
+        // Ignorar fin de stream
+        if (chunk === "[FIN]" || chunk.includes('"done":true')) {
           eventSource.close();
           return;
         }
 
-        fullReply += data + " ";
+        // 🧹 Limpieza básica del texto entrante
+        chunk = chunk
+          .replace(/^\[INST\][\s\S]*?\> /, "") // elimina prompts internos tipo [INST] ... >
+          .replace(/(\w)\s+(\w)/g, "$1 $2") // repara palabras pegadas
+          .replace(/\s{2,}/g, " ") // quita espacios dobles
+          .replace(/([.,!?])(?=[^\s])/g, "$1 ") // asegura espacio tras puntuación
+          .replace(/[^\x20-\x7EáéíóúÁÉÍÓÚñÑüÜ¡¿]/g, ""); // elimina caracteres raros
+
+        fullReply += chunk + " ";
+
         setMessages((prev) => {
           const updated = [...prev];
           updated[updated.length - 1] = {

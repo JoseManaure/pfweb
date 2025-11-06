@@ -1,3 +1,4 @@
+import { NextApiRequest, NextApiResponse } from "next";
 import clientPromise from "@/lib/mongodb";
 import { personalContext } from "@/data/context";
 

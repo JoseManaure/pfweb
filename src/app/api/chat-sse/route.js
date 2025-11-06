@@ -2,7 +2,7 @@
 import { personalContext } from "@/data/context";
 
 const MISTRAL_API_URL =
-    process.env.MISTRAL_API_URL || "https://seven-apples-draw.loca.lt/api/chat";
+    process.env.MISTRAL_API_URL || "https://wide-files-send.loca.lt/api/chat";
 
 export const runtime = "nodejs"; // importante: no "edge"
 

@@ -3,7 +3,7 @@ import clientPromise from "@/lib/mongodb";
 import { personalContext } from "@/data/context";
 
 const MISTRAL_API_URL =
-  process.env.MISTRAL_API_URL || "https://loud-melons-matter.loca.lt/api/chat";
+  process.env.MISTRAL_API_URL || "https://neat-lines-fry.loca.lt/api/chat";
 const N8N_WEBHOOK_URL =
   process.env.N8N_WEBHOOK_URL || "https://f8e85894b3ed.ngrok-free.app/webhook/chat";
 
@@ -36,6 +36,19 @@ const contactQuestions: Record<ContactField, string> = {
 type ContactSession = { currentField: number; data: Record<ContactField, string> };
 const contactSessions = new Map<string, ContactSession>();
 
+
+
+function cleanAIResponse(text: string) {
+  return text
+    .replace(/\[INST\]/g, "")
+    .replace(/\[\/INST\]/g, "")
+    .replace(/<\/?[^>]+(>|$)/g, "") // quita tags html si vienen
+    .replace(/\s+/g, " ") // espacios dobles
+    .trim();
+}
+
+
+
 // ------------------- UTILIDADES -------------------
 
 function tokenize(str: string) {
@@ -64,12 +77,18 @@ function getSmartAnswer(userMessage: string) {
 }
 
 async function askMistral(message: string): Promise<string> {
+
+
+
   try {
     const res = await fetch(MISTRAL_API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt: `${personalContext}\nUsuario: ${message}` }),
     });
+    const raw = await res.text();
+    const clean = cleanAIResponse(raw.replace(/^data:\s*/gm, ""));
+    return clean;
     if (!res.ok) return "No pude conectar con el modelo Mistral.";
     const text = await res.text();
     return text.replace(/^data:\s*/gm, "").trim();

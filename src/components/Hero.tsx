@@ -65,6 +65,8 @@ export default function Hero() {
     if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
   }, [messages]);
 
+  const triggerKeywords = ["contratar", "servicio", "precio", "presupuesto", "trabajar contigo", "cotización"];
+
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -75,22 +77,46 @@ export default function Hero() {
     const prompt = input.trim();
     setInput("");
 
+    const backendBase =
+      process.env.NODE_ENV === "production"
+        ? "https://portfolio-server-production-67e9.up.railway.app"
+        : "http://localhost:4001";
+
+    const shouldUseWebhook = triggerKeywords.some(kw =>
+      prompt.toLowerCase().includes(kw)
+    );
+
     try {
-      // 🌍 Detecta entorno y configura el backend automáticamente
-      const backendBase =
-        process.env.NODE_ENV === "production"
-          ? "https://portfolio-server-production-67e9.up.railway.app" // ✅ URL de tu app desplegada en Vercel
-          : "http://localhost:4001"; // ✅ backend local en desarrollo
+      if (shouldUseWebhook) {
+        console.log("📩 Enviando mensaje a flujo de contacto (Next API)...");
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: sessionId,
+            messages: [...messages, { role: "user", content: prompt, time: getCurrentTime() }],
+          }),
+        });
 
-      // 📡 Conexión SSE
-      const sseUrl = `${backendBase}/api/chat-sse?prompt=${encodeURIComponent(
-        prompt
-      )}&sessionId=${sessionId}`;
+        const data = await res.json();
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            role: "assistant",
+            content: data.message.content,
+            time: getCurrentTime(),
+          };
+          return updated;
+        });
+        if (data.suggestions) setSuggestions(data.suggestions);
+        return;
+      }
 
+      // 💬 Caso normal: usar SSE
+      const sseUrl = `${backendBase}/api/chat-sse?prompt=${encodeURIComponent(prompt)}&sessionId=${sessionId}`;
       console.log("📡 Conectando SSE a:", sseUrl);
 
       const eventSource = new EventSource(sseUrl);
-
       let fullReply = "";
 
       eventSource.onmessage = (event) => {

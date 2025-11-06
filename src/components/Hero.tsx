@@ -45,7 +45,7 @@ export default function Hero() {
   const BASE_URL =
     process.env.NODE_ENV === "production"
       ? process.env.NEXT_PUBLIC_API_URL || "https://tu-backend-production-url.com"
-      : "https://wide-files-send.loca.lt"; // 👈 tu backend local (Railway o Express local)
+      : "https://angry-bananas-wink.loca.lt"; // 👈 tu backend local (Railway o Express local)
 
   useEffect(() => {
     if (messages.length === 0) {

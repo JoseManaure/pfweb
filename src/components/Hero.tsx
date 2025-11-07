@@ -20,11 +20,12 @@ const techProject = [
 
 const initialSuggestions = [
   "Hola",
+  "Quiero Contratar tus servicios",
   "Cuéntame sobre tu experiencia",
   "Qué haces con Node.js",
   "Proyectos destacados",
   "Descargar CV",
-  "contratar",
+
 ];
 
 function getCurrentTime(): string {

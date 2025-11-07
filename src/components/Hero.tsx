@@ -61,7 +61,7 @@ export default function Hero() {
     if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
   }, [messages, isTyping]); // 👈 también cuando cambia isTyping
 
-  const triggerKeywords = ["contratar", "servicio", "precio", "presupuesto", "trabajar contigo", "cotización"];
+  const triggerKeywords = ["Contratar", "servicio", "precio", "presupuesto", "trabajar contigo", "cotización"];
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -75,7 +75,7 @@ export default function Hero() {
     const backendBase =
       process.env.NODE_ENV === "production"
         ? "https://portfolio-server-production-67e9.up.railway.app"
-        : "https://ready-sloths-drop.loca.lt";
+        : "https://slow-dots-rule.loca.lt";
 
     const shouldUseWebhook = triggerKeywords.some((kw) => prompt.toLowerCase().includes(kw));
 

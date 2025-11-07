@@ -120,23 +120,29 @@ export default function Hero() {
       eventSource.onmessage = (event) => {
         let chunk = event.data;
 
-        // 👇 si es el fin, cierra y detén el "escribiendo"
         if (chunk === "[FIN]" || chunk.includes('"done":true')) {
           setIsTyping(false);
           eventSource.close();
           return;
         }
 
-        // 👇 si llega el primer token, apagamos el "escribiendo"
         if (isTyping) setIsTyping(false);
 
+        // Limpieza básica de tokens y control de espacios
         chunk = chunk
           .replace(/^\[INST\][\s\S]*?\> /, "")
           .replace(/\s{2,}/g, " ")
           .replace(/([.,!?])(?=[^\s])/g, "$1 ")
-          .replace(/[^\x20-\x7EáéíóúÁÉÍÓÚñÑüÜ¡¿]/g, "");
+          .replace(/[^\x20-\x7EáéíóúÁÉÍÓÚñÑüÜ¡¿]/g, "")
+          .trim();
 
-        fullReply += chunk + " ";
+        // 👇 Asegurar que no se peguen palabras entre fragmentos
+        const needsSpace =
+          fullReply.length > 0 &&
+          !fullReply.endsWith(" ") &&
+          !chunk.startsWith(" ");
+
+        fullReply += (needsSpace ? " " : "") + chunk;
 
         setMessages((prev) => {
           const updated = [...prev];
@@ -148,6 +154,7 @@ export default function Hero() {
           return updated;
         });
       };
+
 
 
       eventSource.onerror = (err) => {

@@ -38,14 +38,10 @@ export default function Hero() {
   const [input, setInput] = useState("");
   const [isOpen, setIsOpen] = useState(true);
   const [suggestions, setSuggestions] = useState<string[]>(initialSuggestions);
+  const [isTyping, setIsTyping] = useState(false); // 👈 nuevo estado
   const [sessionId] = useState(() => crypto.randomUUID());
   const toggleChat = () => setIsOpen(!isOpen);
 
-  // 🌍 Detecta entorno y construye URL base
-  const BASE_URL =
-    process.env.NODE_ENV === "production"
-      ? process.env.NEXT_PUBLIC_API_URL || "https://portfolio-server-production-67e9.up.railway.app"
-      : "https://plenty-jokes-beam.loca.lt"; // 👈 tu backend local (Railway o Express local)
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -63,7 +59,7 @@ export default function Hero() {
   useEffect(() => {
     const chatContainer = document.getElementById("chat-messages");
     if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
-  }, [messages]);
+  }, [messages, isTyping]); // 👈 también cuando cambia isTyping
 
   const triggerKeywords = ["contratar", "servicio", "precio", "presupuesto", "trabajar contigo", "cotización"];
 
@@ -72,19 +68,16 @@ export default function Hero() {
 
     const userMessage: Message = { role: "user", content: input, time: getCurrentTime() };
     const assistantMessage: Message = { role: "assistant", content: "", time: getCurrentTime() };
-    setMessages(prev => [...prev, userMessage, assistantMessage]);
-
-    const prompt = input.trim();
+    setMessages((prev) => [...prev, userMessage, assistantMessage]);
     setInput("");
 
+    const prompt = input.trim();
     const backendBase =
       process.env.NODE_ENV === "production"
         ? "https://portfolio-server-production-67e9.up.railway.app"
-        : "http://localhost:4001";
+        : "https://sixty-geese-sneeze.loca.lt";
 
-    const shouldUseWebhook = triggerKeywords.some(kw =>
-      prompt.toLowerCase().includes(kw)
-    );
+    const shouldUseWebhook = triggerKeywords.some((kw) => prompt.toLowerCase().includes(kw));
 
     try {
       if (shouldUseWebhook) {
@@ -99,7 +92,7 @@ export default function Hero() {
         });
 
         const data = await res.json();
-        setMessages(prev => {
+        setMessages((prev) => {
           const updated = [...prev];
           updated[updated.length - 1] = {
             role: "assistant",
@@ -118,23 +111,26 @@ export default function Hero() {
 
       const eventSource = new EventSource(sseUrl);
       let fullReply = "";
+      setIsTyping(true); // 👈 empieza a escribir
 
       eventSource.onmessage = (event) => {
         let chunk = event.data;
 
-        // Ignorar fin de stream
+        // 👇 si es el fin, cierra y detén el "escribiendo"
         if (chunk === "[FIN]" || chunk.includes('"done":true')) {
+          setIsTyping(false);
           eventSource.close();
           return;
         }
 
-        // 🧹 Limpieza básica del texto entrante
+        // 👇 si llega el primer token, apagamos el "escribiendo"
+        if (isTyping) setIsTyping(false);
+
         chunk = chunk
-          .replace(/^\[INST\][\s\S]*?\> /, "") // elimina prompts internos tipo [INST] ... >
-          .replace(/(\w)\s+(\w)/g, "$1 $2") // repara palabras pegadas
-          .replace(/\s{2,}/g, " ") // quita espacios dobles
-          .replace(/([.,!?])(?=[^\s])/g, "$1 ") // asegura espacio tras puntuación
-          .replace(/[^\x20-\x7EáéíóúÁÉÍÓÚñÑüÜ¡¿]/g, ""); // elimina caracteres raros
+          .replace(/^\[INST\][\s\S]*?\> /, "")
+          .replace(/\s{2,}/g, " ")
+          .replace(/([.,!?])(?=[^\s])/g, "$1 ")
+          .replace(/[^\x20-\x7EáéíóúÁÉÍÓÚñÑüÜ¡¿]/g, "");
 
         fullReply += chunk + " ";
 
@@ -149,8 +145,10 @@ export default function Hero() {
         });
       };
 
+
       eventSource.onerror = (err) => {
         console.error("❌ Error SSE:", err);
+        setIsTyping(false);
         setMessages((prev) => {
           const updated = [...prev];
           updated[updated.length - 1] = {
@@ -164,6 +162,7 @@ export default function Hero() {
       };
     } catch (err) {
       console.error("❌ Error enviando mensaje:", err);
+      setIsTyping(false);
       setMessages((prev) => {
         const updated = [...prev];
         updated[updated.length - 1] = {
@@ -175,6 +174,7 @@ export default function Hero() {
       });
     }
   };
+
 
   return (
     <section className="flex items-center justify-center min-h-[90vh] bg-gray-50 dark:bg-[#0a0f1a] px-6 relative transition-colors duration-500">
@@ -226,6 +226,11 @@ export default function Hero() {
                   <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{m.time}</div>
                 </div>
               ))}
+              {isTyping && (
+                <div className="text-left mb-2 text-gray-500 dark:text-gray-400 text-sm italic animate-pulse">
+                  ✍️ Escribiendo...
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-2">

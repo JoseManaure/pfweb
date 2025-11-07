@@ -75,7 +75,7 @@ export default function Hero() {
     const backendBase =
       process.env.NODE_ENV === "production"
         ? "https://portfolio-server-production-67e9.up.railway.app"
-        : "https://sixty-geese-sneeze.loca.lt";
+        : "https://ready-sloths-drop.loca.lt";
 
     const shouldUseWebhook = triggerKeywords.some((kw) => prompt.toLowerCase().includes(kw));
 

@@ -21,11 +21,10 @@ const techProject = [
 const initialSuggestions = [
   "Hola",
   "Cuéntame sobre tu experiencia",
-  "Háblame de React",
   "Qué haces con Node.js",
   "Proyectos destacados",
   "Descargar CV",
-  "UI/UX",
+  "contratar",
 ];
 
 function getCurrentTime(): string {
@@ -130,9 +129,9 @@ export default function Hero() {
           .replace(/^\[INST\][\s\S]*?\> /, "")
           .replace(/\s{2,}/g, " ")
           .replace(/([.,!?])(?=[^\s])/g, "$1 ")
-          .replace(/[^\x20-\x7EáéíóúÁÉÍÓÚñÑüÜ¡¿]/g, "");
+          .replace(/[^\S\r\n]+/g, " ")
 
-        fullReply += chunk + " ";
+        fullReply = (fullReply + " " + chunk).replace(/\s+/g, " ").trim();
 
         setMessages((prev) => {
           const updated = [...prev];

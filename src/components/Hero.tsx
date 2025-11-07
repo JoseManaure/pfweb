@@ -20,12 +20,12 @@ const techProject = [
 
 const initialSuggestions = [
   "Hola",
-  "Quiero Contratar tus servicios",
   "Cuéntame sobre tu experiencia",
+  "Háblame de React",
   "Qué haces con Node.js",
   "Proyectos destacados",
   "Descargar CV",
-
+  "UI/UX",
 ];
 
 function getCurrentTime(): string {
@@ -42,6 +42,10 @@ export default function Hero() {
   const [sessionId] = useState(() => crypto.randomUUID());
   const toggleChat = () => setIsOpen(!isOpen);
 
+  const BASE_URL =
+    process.env.NODE_ENV === "production"
+      ? process.env.NEXT_PUBLIC_API_URL || "https://portfolio-server-production-67e9.up.railway.app"
+      : "https://sixty-geese-sneeze.loca.lt";
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -61,7 +65,7 @@ export default function Hero() {
     if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
   }, [messages, isTyping]); // 👈 también cuando cambia isTyping
 
-  const triggerKeywords = ["Contratar", "servicio", "precio", "presupuesto", "trabajar contigo", "cotización"];
+  const triggerKeywords = ["contratar", "servicio", "precio", "presupuesto", "trabajar contigo", "cotización"];
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -130,9 +134,9 @@ export default function Hero() {
           .replace(/^\[INST\][\s\S]*?\> /, "")
           .replace(/\s{2,}/g, " ")
           .replace(/([.,!?])(?=[^\s])/g, "$1 ")
-          .replace(/[^\S\r\n]+/g, " ")
+          .replace(/[^\x20-\x7EáéíóúÁÉÍÓÚñÑüÜ¡¿]/g, "");
 
-        fullReply = (fullReply + " " + chunk).replace(/\s+/g, " ").trim();
+        fullReply += chunk + " ";
 
         setMessages((prev) => {
           const updated = [...prev];

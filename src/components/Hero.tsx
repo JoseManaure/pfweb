@@ -45,7 +45,7 @@ export default function Hero() {
   const BASE_URL =
     process.env.NODE_ENV === "production"
       ? process.env.NEXT_PUBLIC_API_URL || "https://portfolio-server-production-67e9.up.railway.app"
-      : "https://sixty-geese-sneeze.loca.lt";
+      : "https://every-wasps-write.loca.lt";
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -79,7 +79,7 @@ export default function Hero() {
     const backendBase =
       process.env.NODE_ENV === "production"
         ? "https://portfolio-server-production-67e9.up.railway.app"
-        : "https://gold-rabbits-wave.loca.lt";
+        : "https://every-wasps-write.loca.lt";
 
     const shouldUseWebhook = triggerKeywords.some((kw) => prompt.toLowerCase().includes(kw));
 

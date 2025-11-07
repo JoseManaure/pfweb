@@ -116,7 +116,6 @@ export default function Hero() {
       const eventSource = new EventSource(sseUrl);
       let fullReply = "";
       setIsTyping(true); // 👈 empieza a escribir
-
       eventSource.onmessage = (event) => {
         let chunk = event.data;
 
@@ -128,21 +127,27 @@ export default function Hero() {
 
         if (isTyping) setIsTyping(false);
 
-        // Limpieza básica de tokens y control de espacios
+        // 🔹 Limpieza avanzada del texto
         chunk = chunk
-          .replace(/^\[INST\][\s\S]*?\> /, "")
-          .replace(/\s{2,}/g, " ")
-          .replace(/([.,!?])(?=[^\s])/g, "$1 ")
-          .replace(/[^\x20-\x7EáéíóúÁÉÍÓÚñÑüÜ¡¿]/g, "")
+          .replace(/^\[INST\][\s\S]*?\> /, "")       // eliminar tokens [INST]
+          .replace(/\s+/g, " ")                       // normalizar espacios
+          .replace(/([.,!?])(?=[^\s])/g, "$1 ")       // asegurar espacio después de signos
+          .replace(/([a-záéíóúñ])([A-ZÁÉÍÓÚÑ])/g, "$1 $2") // separar si se pegan palabras con mayúscula
+          .replace(/([a-z])([A-Z])/g, "$1 $2")        // casos tipo 'Manaureesun' -> 'Manaure es un'
+          .replace(/([a-z])([A-Z])/g, "$1 $2")
+          .replace(/[^\x20-\x7EáéíóúÁÉÍÓÚñÑüÜ¡¿]/g, "") // eliminar caracteres raros
           .trim();
 
-        // 👇 Asegurar que no se peguen palabras entre fragmentos
+        // 🔹 Verificar si hace falta espacio entre fragmentos
         const needsSpace =
           fullReply.length > 0 &&
           !fullReply.endsWith(" ") &&
           !chunk.startsWith(" ");
 
         fullReply += (needsSpace ? " " : "") + chunk;
+
+        // 🔹 Evitar duplicación de espacios
+        fullReply = fullReply.replace(/\s{2,}/g, " ");
 
         setMessages((prev) => {
           const updated = [...prev];
@@ -154,6 +159,7 @@ export default function Hero() {
           return updated;
         });
       };
+
 
 
 

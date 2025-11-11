@@ -42,10 +42,7 @@ export default function Hero() {
   const [sessionId] = useState(() => crypto.randomUUID());
   const toggleChat = () => setIsOpen(!isOpen);
 
-  const BASE_URL =
-    process.env.NODE_ENV === "production"
-      ? process.env.NEXT_PUBLIC_API_URL || "https://portfolio-server-production-67e9.up.railway.app"
-      : "https://every-wasps-write.loca.lt";
+
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -79,7 +76,7 @@ export default function Hero() {
     const backendBase =
       process.env.NODE_ENV === "production"
         ? "https://portfolio-server-production-67e9.up.railway.app"
-        : "https://metal-brooms-enter.loca.lt";
+        : "https://flat-lines-raise.loca.lt";
 
     const shouldUseWebhook = triggerKeywords.some((kw) => prompt.toLowerCase().includes(kw));
 

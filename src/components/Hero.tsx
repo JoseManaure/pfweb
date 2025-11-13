@@ -79,7 +79,22 @@ export default function Hero() {
   }, [messages, isTyping]);
 
   return (
-    <section className="flex items-center justify-center min-h-[90vh] bg-gray-50 dark:bg-[#0a0f1a] px-6 relative transition-colors duration-500">
+    <section className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-[#0a0f1a] px-6 relative transition-colors duration-500 text-center">
+      {/* === Hero content === */}
+      <h1 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white mb-4">
+        👋 Hi, I'm <span className="text-brandBlue">Jose Manaure</span>
+      </h1>
+      <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
+        Full Stack Developer specialized in <b>Next.js</b> & <b>NestJS</b>
+      </p>
+      <div className="flex gap-6 text-4xl text-brandBlue">
+        <FaReact />
+        <FaNodeJs />
+        <SiMongodb />
+        <SiTailwindcss />
+      </div>
+
+      {/* === Floating Chat === */}
       <div className="fixed bottom-5 right-5 z-50">
         {isOpen ? (
           <div className="w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-4 flex flex-col">
@@ -90,7 +105,9 @@ export default function Hero() {
             <div className="h-64 overflow-y-auto mb-2" id="chat-messages">
               {messages.map((m, i) => (
                 <div key={i} className={`mb-2 ${m.role === "user" ? "text-right" : "text-left"}`}>
-                  <span className={`inline-block px-3 py-2 rounded-xl max-w-[85%] break-words whitespace-pre-wrap ${m.role === "user" ? "bg-blue-100 dark:bg-sky-800 text-gray-800 dark:text-gray-200" : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200"}`}>
+                  <span className={`inline-block px-3 py-2 rounded-xl max-w-[85%] break-words whitespace-pre-wrap ${m.role === "user"
+                    ? "bg-blue-100 dark:bg-sky-800 text-gray-800 dark:text-gray-200"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200"}`}>
                     {m.content}
                   </span>
                   <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{m.time}</div>
@@ -103,7 +120,13 @@ export default function Hero() {
               )}
             </div>
             <div className="flex gap-2">
-              <input value={input} onChange={(e: ChangeEvent<HTMLInputElement>) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendMessage()} placeholder="Escribe tu mensaje..." className="flex-1 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue/40" />
+              <input
+                value={input}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                placeholder="Escribe tu mensaje..."
+                className="flex-1 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue/40"
+              />
               <button onClick={sendMessage} className="px-3 py-2 bg-brandBlue text-white rounded-lg hover:bg-blue-700 transition text-sm">➤</button>
             </div>
           </div>

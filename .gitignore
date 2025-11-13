@@ -47,4 +47,5 @@ llama_api/
 out/
 dist/
 !models/
+!models/Chat.js
 !models/Visitor.js

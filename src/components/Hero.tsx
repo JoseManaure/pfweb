@@ -31,7 +31,7 @@ export default function Hero() {
     const backendBase =
       process.env.NODE_ENV === "production"
         ? "https://portfolio-server-production-67e9.up.railway.app"
-        : process.env.LOCAL_BACKEND_URL || "https://portfolio-server-production-67e9.up.railway.app";
+        : process.env.LOCAL_BACKEND_URL || "https://jnana2.loca.lt";
 
     const sseUrl = `${backendBase}/api/chat-sse?prompt=${encodeURIComponent(prompt)}&sessionId=${sessionId}`;
     const eventSource = new EventSource(sseUrl);

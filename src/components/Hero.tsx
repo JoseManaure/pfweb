@@ -31,7 +31,7 @@ export default function Hero() {
     const backendBase =
       process.env.NODE_ENV === "production"
         ? "https://portfolio-server-production-67e9.up.railway.app"
-        : process.env.LOCAL_BACKEND_URL || "https://rare-waves-tease.loca.lt";
+        : process.env.LOCAL_BACKEND_URL || "http://localhost:4000";
 
     const sseUrl = `${backendBase}/api/chat-sse?prompt=${encodeURIComponent(prompt)}&sessionId=${sessionId}`;
     const eventSource = new EventSource(sseUrl);

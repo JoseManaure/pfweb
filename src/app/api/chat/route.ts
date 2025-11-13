@@ -3,7 +3,7 @@ import clientPromise from "@/lib/mongodb";
 import { personalContext } from "@/data/context";
 
 const MISTRAL_API_URL =
-  process.env.MISTRAL_API_URL || "https://ready-bags-jam.loca.lt/api/chat";
+  process.env.MISTRAL_API_URL || "https://ready-bags-jam.loca.lt";
 const N8N_WEBHOOK_URL =
   process.env.N8N_WEBHOOK_URL || "https://c39b9b66690c.ngrok-free.app/webhook/chat";
 
@@ -71,7 +71,7 @@ async function askMistral(message: string): Promise<string> {
 
 
   try {
-    const res = await fetch(MISTRAL_API_URL, {
+    const res = await fetch(`${MISTRAL_API_URL}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt: `${personalContext}\nUsuario: ${message}` }),

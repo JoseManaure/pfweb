@@ -2,8 +2,10 @@ import { NextApiRequest, NextApiResponse } from "next";
 import clientPromise from "@/lib/mongodb";
 import { personalContext } from "@/data/context";
 
+
+// Para cambiar el flujo y que el modelo este con un tunel local, cambia la variable MISTRAL_API_URL
 const MISTRAL_API_URL =
-  process.env.MISTRAL_API_URL || "https://ready-bags-jam.loca.lt";
+  process.env.MISTRAL_API_URL || "https://95eafe2a50af.ngrok-free.app";
 const N8N_WEBHOOK_URL =
   process.env.N8N_WEBHOOK_URL || "https://c39b9b66690c.ngrok-free.app/webhook/chat";
 

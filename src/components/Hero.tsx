@@ -48,7 +48,7 @@ export default function Hero() {
       // Quitar prefijo "data: " si existe
       let data = event.data;
       if (data.startsWith("data: ")) data = data.slice(6);
-
+      fullReply += (fullReply && !fullReply.endsWith("\n") ? " " : "") + data;
       try {
         // Intentar parsear JSON (por si viene en formato LLaMA delta)
         const parsed = JSON.parse(data);

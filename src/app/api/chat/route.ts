@@ -7,7 +7,7 @@ import { personalContext } from "@/data/context";
 const MISTRAL_API_URL =
   process.env.MISTRAL_API_URL || "https://95eafe2a50af.ngrok-free.app/v1/chat/completions";
 const N8N_WEBHOOK_URL =
-  process.env.N8N_WEBHOOK_URL || "https://c39b9b66690c.ngrok-free.app/webhook/chat";
+  process.env.N8N_WEBHOOK_URL || "https://rude-oranges-read.loca.lt/webhook/chat";
 
 type ChatMessage = { role: "user" | "assistant"; content: string; timestamp: Date };
 type ChatDocument = { userId: string; messages: ChatMessage[] };

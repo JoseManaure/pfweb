@@ -106,7 +106,7 @@ export default function Hero() {
         👋 Hi, I'm <span className="text-brandBlue">Jose Manaure</span>
       </h1>
       <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
-        Desarrollador Full Stack especializado en interfaces modernas con Next.js y APIs robustas con NestJS.
+        Full Stack Developer specialized in <b>Next.js</b> & <b>NestJS</b>
       </p>
       <div className="flex gap-6 text-4xl text-brandBlue">
         <FaReact />

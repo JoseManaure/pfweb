@@ -5,7 +5,7 @@ import { personalContext } from "@/data/context";
 
 // Para cambiar el flujo y que el modelo este con un tunel local, cambia la variable MISTRAL_API_URL
 const MISTRAL_API_URL =
-  process.env.MISTRAL_API_URL || "https://95eafe2a50af.ngrok-free.app";
+  process.env.MISTRAL_API_URL || "https://95eafe2a50af.ngrok-free.app/v1/chat/completions";
 const N8N_WEBHOOK_URL =
   process.env.N8N_WEBHOOK_URL || "https://c39b9b66690c.ngrok-free.app/webhook/chat";
 
@@ -69,24 +69,29 @@ function getSmartAnswer(userMessage: string) {
 }
 
 async function askMistral(message: string): Promise<string> {
-
-
-
   try {
     const res = await fetch(`${MISTRAL_API_URL}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: `${personalContext}\nUsuario: ${message}` }),
+      body: JSON.stringify({
+        messages: [
+          { role: "system", content: personalContext },
+          { role: "user", content: message }
+        ],
+        stream: false
+      }),
     });
 
     if (!res.ok) return "No pude conectar con el modelo Mistral.";
-    const text = await res.text();
-    return text.replace(/^data:\s*/gm, "").trim();
+
+    const json = await res.json();
+    return json.choices?.[0]?.message?.content || "Sin respuesta del modelo";
   } catch (err) {
     console.error("❌ Error Mistral:", err);
     return "No pude conectar con el modelo Mistral.";
   }
 }
+
 
 async function notifyN8n(message: string, title: string = "Nuevo mensaje") {
   try {

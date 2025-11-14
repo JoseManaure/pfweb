@@ -39,18 +39,38 @@ export default function Hero() {
     let fullReply = "";
 
     eventSource.onmessage = (event) => {
-      const chunk = event.data;
-      if (chunk === "[FIN]") {
+      if (event.data === "[FIN]") {
         setIsTyping(false);
         eventSource.close();
         return;
       }
-      fullReply += " " + chunk;
-      setMessages((prev) => {
-        const updated = [...prev];
-        updated[updated.length - 1].content = fullReply.trim();
-        return updated;
-      });
+
+      // Quitar prefijo "data: " si existe
+      let data = event.data;
+      if (data.startsWith("data: ")) data = data.slice(6);
+
+      try {
+        // Intentar parsear JSON (por si viene en formato LLaMA delta)
+        const parsed = JSON.parse(data);
+        const deltaContent = parsed.choices?.[0]?.delta?.content || "";
+
+        if (deltaContent) {
+          fullReply += deltaContent;
+          setMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1].content = fullReply;
+            return updated;
+          });
+        }
+      } catch {
+        // Si no es JSON, agregar como texto plano
+        fullReply += data;
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1].content = fullReply;
+          return updated;
+        });
+      }
     };
 
     eventSource.onerror = (err) => {
@@ -64,6 +84,7 @@ export default function Hero() {
       eventSource.close();
     };
   };
+
 
   useEffect(() => {
     if (messages.length === 0) {

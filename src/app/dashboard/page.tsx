@@ -13,8 +13,8 @@ export default function Dashboard() {
     const [visitorSearch, setVisitorSearch] = useState("");
 
     useEffect(() => {
-        fetch(`/api/dashboard/chats?search=${chatSearch}`).then(res => res.json()).then(data => setChats(data.chats));
-        fetch(`/api/dashboard/visitors?ip=${visitorSearch}`).then(res => res.json()).then(data => setVisitors(data.visitors));
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/dashboard/chats?search=${chatSearch}`).then(res => res.json()).then(data => setChats(data.chats));
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/dashboard/visitors?ip=${visitorSearch}`).then(res => res.json()).then(data => setVisitors(data.visitors));
     }, [chatSearch, visitorSearch]);
 
     // Datos de chats por día

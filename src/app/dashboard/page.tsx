@@ -5,6 +5,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 type Chat = { _id: string; prompt: string; reply: string; sessionId: string; timestamp: string };
 type Visitor = { _id: string; visitorId: string; ip: string; userAgent: string; createdAt: string };
+import VisitorsMap from "@/components/VisitorsMap";
+
 
 export default function Dashboard() {
     const [chats, setChats] = useState<Chat[]>([]);
@@ -111,6 +113,11 @@ export default function Dashboard() {
                         </li>
                     ))}
                 </ul>
+            </section>
+            {/* === Mapa de Visitantes === */}
+            <section className="mt-10">
+                <h2 className="text-xl font-semibold mb-2">Mapa de Visitantes</h2>
+                <VisitorsMap visitors={visitors} />
             </section>
         </div>
     );

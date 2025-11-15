@@ -18,12 +18,14 @@ type Visitor = {
 };
 
 export default function VisitorsMap({ visitors }: { visitors: Visitor[] }) {
+    console.log("VISITORS DATA:", visitors);
     const points = visitors
         .filter((v) => v.location)
         .map((v) => ({
             ...v,
             point: [v.location!.lat, v.location!.lon] as [number, number],
         }));
+
 
     // Centro promedio
     const avgCenter = useMemo(() => {

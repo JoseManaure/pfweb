@@ -9,6 +9,14 @@ function getCurrentTime(): string {
   const now = new Date();
   return now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
+useEffect(() => {
+  fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/visitor`, {
+    method: "POST"
+  })
+    .then(res => res.json())
+    .then(data => console.log("VISITOR REGISTERED:", data))
+    .catch(err => console.error("Error visitor:", err));
+}, []);
 
 export default function Hero() {
   const [messages, setMessages] = useState<Message[]>([]);

@@ -49,7 +49,7 @@ export default function VisitorsMap({ visitors }: { visitors: Visitor[] }) {
                 defaultZoom={2}
                 height={400}
                 provider={(x, y, z) =>
-                    `https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/${z}/${x}/${y}.png`
+                    `https://tile.openstreetmap.org/${z}/${x}/${y}.png`
                 }
             >
                 {points.map((p) => (
@@ -83,13 +83,13 @@ export default function VisitorsMap({ visitors }: { visitors: Visitor[] }) {
                             <br />
                             {p.location?.city}, {p.location?.country}
                             <br />
-                            <small>
-                                {new Date(p.createdAt).toLocaleString()}
-                            </small>
+                            <small>{new Date(p.createdAt).toLocaleString()}</small>
                         </div>
                     </Overlay>
                 ))}
             </Map>
+
+
         </div>
     );
 }

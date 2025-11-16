@@ -76,9 +76,11 @@ export default function Hero() {
   }, [cookieAccepted]);
 
   // ------------------------
-  // Traer visitantes
+  // Traer visitantes SOLO si cookies aceptadas
   // ------------------------
   const fetchVisitors = () => {
+    if (!cookieAccepted) return;
+
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/dashboard/visitors?limit=100`)
       .then(res => res.json())
       .then(data => setVisitors(data.visitors || []))
@@ -186,8 +188,8 @@ export default function Hero() {
         <SiTailwindcss />
       </div>
 
-      {/* Visitors Map */}
-      {visitors.length > 0 && (
+      {/* Visitors Map SOLO si cookies aceptadas */}
+      {cookieAccepted && visitors.length > 0 && (
         <div className="my-8 w-full max-w-4xl">
           <VisitorsMap visitors={visitors} />
         </div>

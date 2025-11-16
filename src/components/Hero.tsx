@@ -38,10 +38,35 @@ export default function Hero() {
   const [sessionId] = useState(() => crypto.randomUUID());
   const [visitors, setVisitors] = useState<Visitor[]>([]);
 
+  const [cookieAccepted, setCookieAccepted] = useState(false);
+
   const toggleChat = () => setIsOpen(!isOpen);
 
-  // 1️⃣ Registrar visitante
+  // ------------------------
+  // Consentimiento de cookies
+  // ------------------------
   useEffect(() => {
+    const consent = localStorage.getItem("cookieConsent") === "true";
+    setCookieAccepted(consent);
+
+    if (consent) initVisitorAndChat();
+  }, []);
+
+  const acceptCookies = () => {
+    localStorage.setItem("cookieConsent", "true");
+    setCookieAccepted(true);
+    initVisitorAndChat();
+  };
+
+  // ------------------------
+  // Inicialización visitante y SSE (solo si acepta cookies)
+  // ------------------------
+  const initVisitorAndChat = () => {
+    registerVisitor();
+    fetchVisitors();
+  };
+
+  const registerVisitor = () => {
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/visitor`, {
       method: "POST",
       credentials: "include",
@@ -49,12 +74,10 @@ export default function Hero() {
       .then(res => res.json())
       .then(data => {
         console.log("Visitor registered:", data.visitorId);
-        fetchVisitors();
       })
       .catch(err => console.error("Error registrando visitante:", err));
-  }, []);
+  };
 
-  // 2️⃣ Traer visitantes desde el backend
   const fetchVisitors = () => {
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/dashboard/visitors?limit=100`)
       .then(res => res.json())
@@ -63,10 +86,12 @@ export default function Hero() {
   };
 
   // ------------------------
-  // Chat SSE
+  // Chat SSE (solo si cookies aceptadas)
   // ------------------------
   const sendMessage = async () => {
+    if (!cookieAccepted) return; // bloquea si no aceptó cookies
     if (!input.trim()) return;
+
     const prompt = input.trim();
     const userMessage: Message = { role: "user", content: prompt, time: getCurrentTime() };
     const assistantMessage: Message = { role: "assistant", content: "", time: getCurrentTime() };
@@ -128,7 +153,9 @@ export default function Hero() {
     };
   };
 
+  // ------------------------
   // Mensaje inicial
+  // ------------------------
   useEffect(() => {
     if (messages.length === 0) {
       setMessages([
@@ -161,52 +188,62 @@ export default function Hero() {
       </div>
 
       {/* Visitors Map */}
-      {visitors.length > 0 && (
+      {cookieAccepted && visitors.length > 0 && (
         <div className="my-8 w-full max-w-4xl">
           <VisitorsMap visitors={visitors} />
         </div>
       )}
 
       {/* Floating Chat */}
-      <div className="fixed bottom-5 right-5 z-50">
-        {isOpen ? (
-          <div className="w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-4 flex flex-col">
-            <div className="flex justify-between items-center mb-2">
-              <span className="font-semibold text-gray-700 dark:text-gray-200">💬 Asistente</span>
-              <button onClick={toggleChat} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-sm">✕</button>
+      {cookieAccepted && (
+        <div className="fixed bottom-5 right-5 z-50">
+          {isOpen ? (
+            <div className="w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-4 flex flex-col">
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-semibold text-gray-700 dark:text-gray-200">💬 Asistente</span>
+                <button onClick={toggleChat} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-sm">✕</button>
+              </div>
+              <div className="h-64 overflow-y-auto mb-2" id="chat-messages">
+                {messages.map((m, i) => (
+                  <div key={i} className={`mb-2 ${m.role === "user" ? "text-right" : "text-left"}`}>
+                    <span className={`inline-block px-3 py-2 rounded-xl max-w-[85%] break-words whitespace-pre-wrap ${m.role === "user"
+                      ? "bg-blue-100 dark:bg-sky-800 text-gray-800 dark:text-gray-200"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200"}`}>
+                      {m.content}
+                    </span>
+                    <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{m.time}</div>
+                  </div>
+                ))}
+                {isTyping && (
+                  <div className="text-left mb-2 text-gray-500 dark:text-gray-400 text-sm italic animate-pulse">
+                    ✍️ Escribiendo...
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={input}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                  placeholder="Escribe tu mensaje..."
+                  className="flex-1 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue/40"
+                />
+                <button onClick={sendMessage} className="px-3 py-2 bg-brandBlue text-white rounded-lg hover:bg-blue-700 transition text-sm">➤</button>
+              </div>
             </div>
-            <div className="h-64 overflow-y-auto mb-2" id="chat-messages">
-              {messages.map((m, i) => (
-                <div key={i} className={`mb-2 ${m.role === "user" ? "text-right" : "text-left"}`}>
-                  <span className={`inline-block px-3 py-2 rounded-xl max-w-[85%] break-words whitespace-pre-wrap ${m.role === "user"
-                    ? "bg-blue-100 dark:bg-sky-800 text-gray-800 dark:text-gray-200"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200"}`}>
-                    {m.content}
-                  </span>
-                  <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{m.time}</div>
-                </div>
-              ))}
-              {isTyping && (
-                <div className="text-left mb-2 text-gray-500 dark:text-gray-400 text-sm italic animate-pulse">
-                  ✍️ Escribiendo...
-                </div>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <input
-                value={input}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                placeholder="Escribe tu mensaje..."
-                className="flex-1 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue/40"
-              />
-              <button onClick={sendMessage} className="px-3 py-2 bg-brandBlue text-white rounded-lg hover:bg-blue-700 transition text-sm">➤</button>
-            </div>
-          </div>
-        ) : (
-          <button onClick={toggleChat} className="bg-brandBlue text-white p-4 rounded-full shadow-lg hover:scale-105 transition-transform">💬</button>
-        )}
-      </div>
+          ) : (
+            <button onClick={toggleChat} className="bg-brandBlue text-white p-4 rounded-full shadow-lg hover:scale-105 transition-transform">💬</button>
+          )}
+        </div>
+      )}
+
+      {/* Cookie Banner */}
+      {!cookieAccepted && (
+        <div className="fixed bottom-0 w-full bg-gray-800 text-white p-4 flex justify-between items-center z-50">
+          <span>Usamos cookies para mejorar tu experiencia. 🍪</span>
+          <button onClick={acceptCookies} className="bg-blue-500 px-4 py-2 rounded">Aceptar</button>
+        </div>
+      )}
     </section>
   );
 }

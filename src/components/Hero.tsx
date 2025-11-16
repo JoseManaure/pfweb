@@ -37,11 +37,32 @@ export default function Hero() {
   const [isTyping, setIsTyping] = useState(false);
   const [sessionId] = useState(() => crypto.randomUUID());
   const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [showCookieBanner, setShowCookieBanner] = useState(false);
+  const [cookieAccepted, setCookieAccepted] = useState(false);
 
   const toggleChat = () => setIsOpen(!isOpen);
 
-  // 1️⃣ Registrar visitante
+  // ------------------------
+  // Banner de cookies
+  // ------------------------
   useEffect(() => {
+    const consent = localStorage.getItem("cookie-consent");
+    if (!consent) setShowCookieBanner(true);
+    else setCookieAccepted(true);
+  }, []);
+
+  const acceptCookies = () => {
+    localStorage.setItem("cookie-consent", "true");
+    setCookieAccepted(true);
+    setShowCookieBanner(false);
+  };
+
+  // ------------------------
+  // Registrar visitante SOLO si acepta cookies
+  // ------------------------
+  useEffect(() => {
+    if (!cookieAccepted) return;
+
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/visitor`, {
       method: "POST",
       credentials: "include",
@@ -52,9 +73,11 @@ export default function Hero() {
         fetchVisitors();
       })
       .catch(err => console.error("Error registrando visitante:", err));
-  }, []);
+  }, [cookieAccepted]);
 
-  // 2️⃣ Traer visitantes desde el backend
+  // ------------------------
+  // Traer visitantes
+  // ------------------------
   const fetchVisitors = () => {
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/dashboard/visitors?limit=100`)
       .then(res => res.json())
@@ -128,7 +151,9 @@ export default function Hero() {
     };
   };
 
+  // ------------------------
   // Mensaje inicial
+  // ------------------------
   useEffect(() => {
     if (messages.length === 0) {
       setMessages([
@@ -147,6 +172,7 @@ export default function Hero() {
   // ------------------------
   return (
     <section className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-[#0a0f1a] px-6 relative transition-colors duration-500 text-center">
+      {/* Hero original */}
       <h1 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white mb-4">
         👋 Hi, I'm <span className="text-brandBlue">Jose Manaure</span>
       </h1>
@@ -207,6 +233,19 @@ export default function Hero() {
           <button onClick={toggleChat} className="bg-brandBlue text-white p-4 rounded-full shadow-lg hover:scale-105 transition-transform">💬</button>
         )}
       </div>
+
+      {/* Banner de cookies */}
+      {showCookieBanner && (
+        <div className="fixed bottom-0 left-0 w-full bg-gray-900 text-white p-4 flex flex-col md:flex-row items-center justify-between gap-2 z-50">
+          <span>🍪 Usamos cookies para mejorar tu experiencia. Al continuar, aceptas nuestra política de cookies.</span>
+          <button
+            onClick={acceptCookies}
+            className="bg-brandBlue px-4 py-2 rounded-md hover:bg-blue-700 transition"
+          >
+            Aceptar
+          </button>
+        </div>
+      )}
     </section>
   );
 }

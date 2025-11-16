@@ -1,24 +1,16 @@
 "use client";
 
-import { Map, Marker, Overlay } from "pigeon-maps";
 import { useMemo } from "react";
+import { Map, Marker, Overlay } from "pigeon-maps";
+import type { Visitor } from "./Hero"; // Importa el tipo Visitor de Hero.tsx
 
-type Visitor = {
-    _id: string;
-    ip: string;
-    visitorId: string;
-    userAgent: string;
-    createdAt: string;
-    location?: {
-        lat: number;
-        lon: number;
-        city: string;
-        country: string;
-    };
-};
+interface VisitorsMapProps {
+    visitors: Visitor[];
+}
 
-export default function VisitorsMap({ visitors }: { visitors: Visitor[] }) {
+export default function VisitorsMap({ visitors }: VisitorsMapProps) {
     console.log("VISITORS DATA:", visitors);
+
     const points = visitors
         .filter((v) => v.location)
         .map((v) => ({
@@ -26,14 +18,10 @@ export default function VisitorsMap({ visitors }: { visitors: Visitor[] }) {
             point: [v.location!.lat, v.location!.lon] as [number, number],
         }));
 
-
-    // Centro promedio
     const avgCenter = useMemo(() => {
         if (points.length === 0) return [0, 0] as [number, number];
-        const lat =
-            points.reduce((sum, p) => sum + p.point[0], 0) / points.length;
-        const lon =
-            points.reduce((sum, p) => sum + p.point[1], 0) / points.length;
+        const lat = points.reduce((sum, p) => sum + p.point[0], 0) / points.length;
+        const lon = points.reduce((sum, p) => sum + p.point[1], 0) / points.length;
         return [lat, lon] as [number, number];
     }, [points]);
 
@@ -50,25 +38,14 @@ export default function VisitorsMap({ visitors }: { visitors: Visitor[] }) {
                 defaultCenter={avgCenter}
                 defaultZoom={2}
                 height={400}
-                provider={(x, y, z) =>
-                    `https://tile.openstreetmap.org/${z}/${x}/${y}.png`
-                }
+                provider={(x, y, z) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`}
             >
                 {points.map((p) => (
-                    <Marker
-                        key={p._id}
-                        width={30}
-                        anchor={p.point}
-                        color="#00d1ff"
-                    />
+                    <Marker key={p._id} width={30} anchor={p.point} color="#00d1ff" />
                 ))}
 
                 {points.map((p) => (
-                    <Overlay
-                        key={p._id + "_popup"}
-                        anchor={p.point}
-                        offset={[0, 35]}
-                    >
+                    <Overlay key={p._id + "_popup"} anchor={p.point} offset={[0, 35]}>
                         <div
                             style={{
                                 background: "rgba(0,0,0,0.8)",
@@ -90,8 +67,6 @@ export default function VisitorsMap({ visitors }: { visitors: Visitor[] }) {
                     </Overlay>
                 ))}
             </Map>
-
-
         </div>
     );
 }

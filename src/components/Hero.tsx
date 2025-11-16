@@ -1,31 +1,76 @@
 "use client";
+
 import { useState, useEffect, ChangeEvent } from "react";
 import { FaReact, FaNodeJs } from "react-icons/fa";
 import { SiMongodb, SiTailwindcss } from "react-icons/si";
+import VisitorsMap from "./VisitorsMap";
+
+// ------------------------
+// Tipos
+// ------------------------
+export type Visitor = {
+  _id: string;
+  ip: string;
+  visitorId: string;
+  userAgent: string;
+  createdAt: string;
+  location?: { lat: number; lon: number; city: string; country: string };
+};
 
 type Message = { role: "user" | "assistant"; content: string; time: string };
 
+// ------------------------
+// Helper
+// ------------------------
 function getCurrentTime(): string {
   const now = new Date();
   return now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-
+// ------------------------
+// Componente
+// ------------------------
 export default function Hero() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isOpen, setIsOpen] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
   const [sessionId] = useState(() => crypto.randomUUID());
+  const [visitors, setVisitors] = useState<Visitor[]>([]);
 
   const toggleChat = () => setIsOpen(!isOpen);
 
+  // 1️⃣ Registrar visitante
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/visitor`, {
+      method: "POST",
+      credentials: "include",
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log("Visitor registered:", data.visitorId);
+        fetchVisitors();
+      })
+      .catch(err => console.error("Error registrando visitante:", err));
+  }, []);
+
+  // 2️⃣ Traer visitantes desde el backend
+  const fetchVisitors = () => {
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/dashboard/visitors?limit=100`)
+      .then(res => res.json())
+      .then(data => setVisitors(data.visitors || []))
+      .catch(err => console.error("Error obteniendo visitantes:", err));
+  };
+
+  // ------------------------
+  // Chat SSE
+  // ------------------------
   const sendMessage = async () => {
     if (!input.trim()) return;
     const prompt = input.trim();
     const userMessage: Message = { role: "user", content: prompt, time: getCurrentTime() };
     const assistantMessage: Message = { role: "assistant", content: "", time: getCurrentTime() };
-    setMessages((prev) => [...prev, userMessage, assistantMessage]);
+    setMessages(prev => [...prev, userMessage, assistantMessage]);
     setInput("");
     setIsTyping(true);
 
@@ -46,27 +91,24 @@ export default function Hero() {
         return;
       }
 
-      // Quitar prefijo "data: " si existe
       let data = event.data;
       if (data.startsWith("data: ")) data = data.slice(6);
 
       try {
-        // Intentar parsear JSON (por si viene en formato LLaMA delta)
         const parsed = JSON.parse(data);
         const deltaContent = parsed.choices?.[0]?.delta?.content || "";
 
         if (deltaContent) {
           fullReply += deltaContent;
-          setMessages((prev) => {
+          setMessages(prev => {
             const updated = [...prev];
             updated[updated.length - 1].content = fullReply;
             return updated;
           });
         }
       } catch {
-        // Si no es JSON, agregar como texto plano
         fullReply += data;
-        setMessages((prev) => {
+        setMessages(prev => {
           const updated = [...prev];
           updated[updated.length - 1].content = fullReply;
           return updated;
@@ -77,7 +119,7 @@ export default function Hero() {
     eventSource.onerror = (err) => {
       console.error("❌ SSE frontend error:", err);
       setIsTyping(false);
-      setMessages((prev) => {
+      setMessages(prev => {
         const updated = [...prev];
         updated[updated.length - 1].content = "❌ Error conectando con el servidor.";
         return updated;
@@ -86,7 +128,7 @@ export default function Hero() {
     };
   };
 
-
+  // Mensaje inicial
   useEffect(() => {
     if (messages.length === 0) {
       setMessages([
@@ -100,9 +142,11 @@ export default function Hero() {
     if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
   }, [messages, isTyping]);
 
+  // ------------------------
+  // Render
+  // ------------------------
   return (
     <section className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-[#0a0f1a] px-6 relative transition-colors duration-500 text-center">
-      {/* === Hero content === */}
       <h1 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white mb-4">
         👋 Hi, I'm <span className="text-brandBlue">Jose Manaure</span>
       </h1>
@@ -116,7 +160,14 @@ export default function Hero() {
         <SiTailwindcss />
       </div>
 
-      {/* === Floating Chat === */}
+      {/* Visitors Map */}
+      {visitors.length > 0 && (
+        <div className="my-8 w-full max-w-4xl">
+          <VisitorsMap visitors={visitors} />
+        </div>
+      )}
+
+      {/* Floating Chat */}
       <div className="fixed bottom-5 right-5 z-50">
         {isOpen ? (
           <div className="w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-4 flex flex-col">

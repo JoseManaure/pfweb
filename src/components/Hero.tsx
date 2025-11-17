@@ -4,6 +4,7 @@ import { useState, useEffect, ChangeEvent } from "react";
 import { FaReact, FaNodeJs } from "react-icons/fa";
 import { SiMongodb, SiTailwindcss } from "react-icons/si";
 import VisitorsMap from "./VisitorsMap";
+import Cookies from "js-cookie";
 
 // ------------------------
 // Tipos
@@ -35,7 +36,10 @@ export default function Hero() {
   const [input, setInput] = useState("");
   const [isOpen, setIsOpen] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
-  const [sessionId] = useState(() => crypto.randomUUID());
+  const [sessionId] = useState(() => {
+    const cookieId = Cookies.get("visitorId");
+    return cookieId ?? crypto.randomUUID();
+  });
   const [visitors, setVisitors] = useState<Visitor[]>([]);
 
   const toggleChat = () => setIsOpen(!isOpen);

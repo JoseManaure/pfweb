@@ -184,12 +184,6 @@ export default function Hero() {
         <SiTailwindcss />
       </div>
 
-      {/* Visitors Map */}
-      {visitors.length > 0 && (
-        <div className="my-8 w-full max-w-4xl">
-          <VisitorsMap visitors={visitors} />
-        </div>
-      )}
 
       {/* Floating Chat */}
       <div className="fixed bottom-5 right-5 z-50">

@@ -36,16 +36,31 @@ export default function Hero() {
   const [input, setInput] = useState("");
   const [isOpen, setIsOpen] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
+
+  // Cookies
+  const [cookiesAccepted, setCookiesAccepted] = useState(false);
+
   const [sessionId] = useState(() => {
     const cookieId = Cookies.get("visitorId");
     return cookieId ?? crypto.randomUUID();
   });
+
   const [visitors, setVisitors] = useState<Visitor[]>([]);
 
   const toggleChat = () => setIsOpen(!isOpen);
 
-  // 1️⃣ Registrar visitante
+  // Verificar si ya aceptó cookies
   useEffect(() => {
+    const accepted = Cookies.get("cookiesAccepted");
+    if (accepted === "true") {
+      setCookiesAccepted(true);
+    }
+  }, []);
+
+  // 1️⃣ Registrar visitante SOLO si aceptó cookies
+  useEffect(() => {
+    if (!cookiesAccepted) return;
+
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/visitor`, {
       method: "POST",
       credentials: "include",
@@ -56,9 +71,9 @@ export default function Hero() {
         fetchVisitors();
       })
       .catch(err => console.error("Error registrando visitante:", err));
-  }, []);
+  }, [cookiesAccepted]);
 
-  // 2️⃣ Traer visitantes desde el backend
+  // Traer visitantes
   const fetchVisitors = () => {
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/dashboard/visitors?limit=100`)
       .then(res => res.json())
@@ -72,8 +87,10 @@ export default function Hero() {
   const sendMessage = async () => {
     if (!input.trim()) return;
     const prompt = input.trim();
+
     const userMessage: Message = { role: "user", content: prompt, time: getCurrentTime() };
     const assistantMessage: Message = { role: "assistant", content: "", time: getCurrentTime() };
+
     setMessages(prev => [...prev, userMessage, assistantMessage]);
     setInput("");
     setIsTyping(true);
@@ -141,6 +158,7 @@ export default function Hero() {
     }
   }, []);
 
+  // Scroll automático
   useEffect(() => {
     const chatContainer = document.getElementById("chat-messages");
     if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -154,9 +172,11 @@ export default function Hero() {
       <h1 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white mb-4">
         👋 Hi, I'm <span className="text-brandBlue">Jose Manaure</span>
       </h1>
+
       <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
         Full Stack Developer specialized in <b>Next.js</b> & <b>NestJS</b>
       </p>
+
       <div className="flex gap-6 text-4xl text-brandBlue">
         <FaReact />
         <FaNodeJs />
@@ -179,23 +199,27 @@ export default function Hero() {
               <span className="font-semibold text-gray-700 dark:text-gray-200">💬 Asistente</span>
               <button onClick={toggleChat} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-sm">✕</button>
             </div>
+
             <div className="h-64 overflow-y-auto mb-2" id="chat-messages">
               {messages.map((m, i) => (
                 <div key={i} className={`mb-2 ${m.role === "user" ? "text-right" : "text-left"}`}>
                   <span className={`inline-block px-3 py-2 rounded-xl max-w-[85%] break-words whitespace-pre-wrap ${m.role === "user"
                     ? "bg-blue-100 dark:bg-sky-800 text-gray-800 dark:text-gray-200"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200"}`}>
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+                    }`}>
                     {m.content}
                   </span>
                   <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{m.time}</div>
                 </div>
               ))}
+
               {isTyping && (
                 <div className="text-left mb-2 text-gray-500 dark:text-gray-400 text-sm italic animate-pulse">
                   ✍️ Escribiendo...
                 </div>
               )}
             </div>
+
             <div className="flex gap-2">
               <input
                 value={input}
@@ -211,6 +235,26 @@ export default function Hero() {
           <button onClick={toggleChat} className="bg-brandBlue text-white p-4 rounded-full shadow-lg hover:scale-105 transition-transform">💬</button>
         )}
       </div>
+
+      {/* COOKIE BANNER */}
+      {!cookiesAccepted && (
+        <div className="fixed bottom-0 left-0 w-full bg-gray-900 text-white p-4 text-sm flex justify-between items-center shadow-lg z-50">
+          <span>
+            Este sitio utiliza cookies para analizar visitas y mejorar tu experiencia.
+            Debes aceptarlas para continuar.
+          </span>
+
+          <button
+            className="bg-blue-600 px-4 py-2 rounded-lg text-white hover:bg-blue-700"
+            onClick={() => {
+              Cookies.set("cookiesAccepted", "true", { expires: 365 });
+              setCookiesAccepted(true);
+            }}
+          >
+            Aceptar
+          </button>
+        </div>
+      )}
     </section>
   );
 }

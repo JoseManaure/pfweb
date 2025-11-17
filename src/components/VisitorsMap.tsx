@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { Map, Marker, Overlay } from "pigeon-maps";
-import type { Visitor } from "./Hero"; // Importa el tipo Visitor de Hero.tsx
+import type { Visitor } from "@/types/Visitor";
 
 interface VisitorsMapProps {
     visitors: Visitor[];
